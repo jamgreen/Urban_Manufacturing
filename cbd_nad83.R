@@ -1,4 +1,5 @@
 #get CBD points
+#had to repoejct the shapefile using GDAL in bash 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
 p_load(sf,ggmap, dplyr)
 
@@ -59,12 +60,12 @@ cbd <- tibble::tribble(
 cbd$FullName <- paste0(cbd$City,","," ",cbd$State)
 
 locations <- geocode(cbd$FullName, output = "latlon", source = "google")
-locations2 <- geocode(cbd$FullName, output = "all", source = "dsk")
+#locations2 <- geocode(cbd$FullName, output = "all", source = "dsk")
 cbd$lat <- locations$lat
 cbd$long <- locations$lon
 
-cbd_Sf <- st_as_sf(cbd, coords = c("long", "lat"), crs = 4326, agr = "constant")
+cbd_Sf <- st_as_sf(cbd, coords = c("long", "lat"), crs = 4326, agr = "identity")
 
 cbd_nad83 <- st_transform(cbd_Sf, 4269)
 
-saveRDS(cbd_nad83, "D:\\Dissertation\\UrbMfg\\Urban_Manufacturing\\data\\cbd_nad83.rds")
+st_write(cbd_nad83, "cbd.shp")
