@@ -64,8 +64,8 @@ locations <- geocode(cbd$FullName, output = "latlon", source = "google")
 cbd$lat <- locations$lat
 cbd$long <- locations$lon
 
-cbd_Sf <- st_as_sf(cbd, coords = c("long", "lat"), crs = 4326, agr = "identity")
+cbd_Sf <- st_as_sf(cbd, coords = c("long", "lat"), crs = 4269, agr = "identity")
 
-cbd_nad83 <- st_transform(cbd_Sf, 4269)
+#cbd_nad83 <- st_transform(cbd_Sf, 4269)
 
-st_write(cbd_nad83, "cbd.shp")
+st_write(cbd_Sf, "cbd.shp", delete_dsn = TRUE)
