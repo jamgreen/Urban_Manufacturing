@@ -59,13 +59,18 @@ cbd <- tibble::tribble(
 
 cbd$FullName <- paste0(cbd$City,","," ",cbd$State)
 
-locations <- geocode(cbd$FullName, output = "latlon", source = "google")
-#locations2 <- geocode(cbd$FullName, output = "all", source = "dsk")
-cbd$lat <- locations$lat
-cbd$long <- locations$lon
+#ran into query limit with google somehow with only 50 calls
+
+#locations <- geocode(cbd$FullName, output = "latlon", source = "google")
+locations2 <- geocode(cbd$FullName, output = "latlon", source = "dsk")
+cbd$lat <- locations2$lat
+cbd$long <- locations2$lon
 
 cbd_Sf <- st_as_sf(cbd, coords = c("long", "lat"), crs = 4269, agr = "identity")
 
 #cbd_nad83 <- st_transform(cbd_Sf, 4269)
 
-st_write(cbd_Sf, "cbd.shp", delete_dsn = TRUE)
+st_write(cbd_Sf, "./data/spatial/cbd.shp", delete_dsn = TRUE)
+
+#write out a quick df of the states of interest for easy filtering later on
+#cbd %>% distinct(State) %>% saveRDS(file = "./data/lehd_state_list.rds")

@@ -1,18 +1,18 @@
+#download and join the lehd data to spatial tract data
+
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(tigris,purrr, dplyr)
+p_load(tigris,purrr, sf, dplyr)
+options(tigris_class = "sf", tigris_use_cache = TRUE)
 
-us_states <- tolower(unique(fips_codes$state)[1:51])
+devtools::install_github("jamgreen/lehdr")
+library(lehdr)
 
-year <- c(2004, 2014)
+study_states <- readRDS("./data/lehd_state_list.rds")
 
-get_lehd <- function(states, year) {
-  #grabbing all private jobs WAC
-  lehd_url <- paste0("https://lehd.ces.census.gov/data/lodes/LODES7/", states,"/wac/", states,"_wac_S000_JT02_",year,".csv.gz")
-  filenames <- paste0(states,"_", year,".csv.gz")
-  download.file(lehd_url, dest = filenames)
-}
+#download 2004 and 2015 to the data/lehd folder
 
-possible_get_lehd <- possibly(get_lehd, otherwise = NA)
-#setwd("D:/Dissertation/UrbMfg/Urban_Manufacturing/lodes_data")
-map(us_states, possible_get_lehd,year = 2004)
-map(us_states, possible_get_lehd,year = 2014)
+lehd04 <- map_df(study_states, grab_lodes,year = 2004, lodes_type = "wac", job_type = "JT01", segment = "S000", 
+       download_dir = "./data/lehd")
+
+lehd15 <- map_df(study_states, grab_lodes,year = 2015, lodes_type = "wac", job_type = "JT01", segment = "S000", 
+        download_dir = "./data/lehd")
