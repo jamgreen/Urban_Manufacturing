@@ -73,4 +73,4 @@ cbd_Sf <- st_as_sf(cbd, coords = c("long", "lat"), crs = 4269, agr = "identity")
 st_write(cbd_Sf, "./data/spatial/cbd.shp", delete_dsn = TRUE)
 
 #write out a quick df of the states of interest for easy filtering later on
-#cbd %>% distinct(State) %>% saveRDS(file = "./data/lehd_state_list.rds")
+ saveRDS( cbd,file = "./data/lehd_state_list.rds")
