@@ -37,7 +37,7 @@ Propensity scores have a now long history of use with Bill I've got a great reso
 2.  Independent variables
   * Infrastructure/Landscape
     - distance to CBD
-      - more central tracks, especially if industrial, are probably more likely to face conversion pressures and I suspect a positive relationship between distance from CBD and change in employment
+      - more central areas, especially if industrial, are probably more likely to face conversion pressures and I suspect a positive relationship between distance from CBD and change in employment
     - intersection density (from Smart Location DB, needs to be at block group level)
       - again, central city districts may face greater conversion pressure and other push factors that make it harder for industrial users to stay and so I would expect a negative relationship between increased street density and employment
     - distance from population weighted centroid transit stop (Smart Location DB)
