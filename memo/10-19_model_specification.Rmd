@@ -2,7 +2,9 @@
 title: "Model Approach Issues"
 author: "Jamaal Green"
 date: "10/19/2017"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 I am currently sketching out ideal model specifications for my modeling chapter. I am debating two approaches, currently, and collecting the basic data needed for both. 

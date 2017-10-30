@@ -4,7 +4,7 @@
 #in this case county and CBSA ids
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(tigris,purrr, stringr, sf, dplyr)
+p_load(tigris,purrr, readr, stringr, sf, dplyr)
 options(tigris_class = "sf", tigris_use_cache = TRUE)
 
 devtools::install_github("jamgreen/lehdr")
@@ -18,21 +18,20 @@ states_distinct <- study_states %>%  distinct(State)
 
 #download 2004 and 2015 to the data/lehd folder
 
-lehd04 <- map_df(states_distinct$State, grab_lodes,year = 2004, lodes_type = "wac", job_type = "JT01", segment = "S000", 
-       download_dir = "./data/lehd")
+years <- 2005:2014
 
-lehd15 <- map_df(states_distinct$State, grab_lodes,year = 2015, lodes_type = "wac", job_type = "JT01", segment = "S000", 
-        download_dir = "./data/lehd")
+big_lehd <- grab_lodes(state = states_distinct$State, year = years, 
+                       lodes_type = "wac", job_type = "JT01", segment = "S000",
+                       download_dir = "./data/lodes_raw")
+ 
 
 #filter out all non-aggregate job variables, keep all jobs for entropy measures
-
-lehd04 <- lehd04 %>% select(1, 9:28)
-lehd15 <- lehd15 %>% select(1, 9:28)
+big_lehd <- big_lehd %>% select(1, 9:28, 54:55)
 
 #make a new county id from w_geocode
 
-lehd04 <- lehd04 %>% mutate(CountyFIPS = str_sub(w_geocode, 1, 5))
-lehd15 <- lehd15 %>% mutate(CountyFIPS = str_sub(w_geocode, 1, 5))
+big_lehd <- big_lehd %>% mutate(CountyFIPS = str_sub(w_geocode, 1, 5))
+
 
 #bring in county->msa crosswalk from NBER: http://www.nber.org/data/cbsa-msa-fips-ssa-county-crosswalk.html
 
@@ -43,30 +42,28 @@ cbsatocountycrosswalk <- cbsatocountycrosswalk %>% select(1:5, 7:9)
 
 #join both files to the crosswalk so we have MSA ids
 
-lehd04 <- lehd04 %>% left_join(cbsatocountycrosswalk, by = c("CountyFIPS" = "fipscounty"))
-lehd15 <- lehd15 %>% left_join(cbsatocountycrosswalk, by = c("CountyFIPS" = "fipscounty"))
+big_lehd <- big_lehd %>% left_join(cbsatocountycrosswalk, 
+                                   by = c("CountyFIPS" = "fipscounty"))
 
-lehd04_bg <- lehd04 %>% mutate(BG_FIPS = str_sub(w_geocode, 1, 12)) %>% 
-  group_by(BG_FIPS, cbsa, cbsaname) %>% summarise_if(is.numeric, funs(sum))
 
-lehd15_bg <- lehd15 %>% mutate(BG_FIPS = str_sub(w_geocode, 1, 12)) %>% 
-  group_by(BG_FIPS, cbsa, cbsaname) %>% summarise_if(is.numeric, funs(sum))
+big_lehd <- big_lehd %>% mutate(BG_FIPS = str_sub(w_geocode, 1, 12)) %>% 
+  group_by(BG_FIPS, cbsa, cbsaname, year) %>% summarise_if(is.numeric, funs(sum))
+
+
 
 #keep all block groups within CBSAs and drop the rest
 
-lehd04_bg <- lehd04_bg %>% filter(!is.na(cbsa))
-lehd15_bg <- lehd15_bg %>% filter(!is.na(cbsa))
+big_lehd <- big_lehd %>% filter(!is.na(cbsa))
+
 
 #join to block group shapefile for now
 
 bg_sf <- lapply(states_distinct$State, function(x) block_groups(state = x))
 bg_sf <- rbind_tigris(bg_sf)
 
-lehd04_bg <- lehd04_bg %>% left_join(bg_sf, by = c("BG_FIPS" = "GEOID"))
-lehd04_bg <- lehd04_bg %>% ungroup() %>% st_as_sf()
+big_lehd <- big_lehd %>% left_join(bg_sf, by = c("BG_FIPS" = "GEOID"))
+big_lehd <- big_lehd %>% ungroup() %>% st_as_sf()
 
-lehd15_bg <- lehd15_bg %>%  left_join(bg_sf, by = c("BG_FIPS" = "GEOID"))
-lehd15_bg <- lehd15_bg %>% ungroup() %>% st_as_sf()
 
-saveRDS(lehd04_bg, file = "data/spatial/lehd_2004_sf.RDS")
-saveRDS(lehd15_bg, file = "data/spatial/lehd_2015_sf.RDS")
+saveRDS(big_lehd, file = "data/spatial/lehd_cbsa_sf.RDS")
+rm(list = ls())

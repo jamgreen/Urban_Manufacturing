@@ -1,5 +1,6 @@
 #get CBD points
 #had to repoejct the shapefile using GDAL in bash 
+#will attempt census geocoder
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
 p_load(sf,ggmap, dplyr)
 
@@ -61,16 +62,26 @@ cbd$FullName <- paste0(cbd$City,","," ",cbd$State)
 
 #ran into query limit with google somehow with only 50 calls
 
-#locations <- geocode(cbd$FullName, output = "latlon", source = "google")
-locations2 <- geocode(cbd$FullName, output = "latlon", source = "dsk")
-cbd$lat <- locations2$lat
-cbd$long <- locations2$lon
+locations <- geocode(cbd$FullName, output = "latlon", source = "google")
+#locations2 <- geocode(cbd$FullName, output = "latlon", source = "dsk")
+
+cbd$lat <- locations$lat
+cbd$long <- locations$lon
+
+#cbd$lat <- locations2$lat
+#cbd$long <- locations2$lon
 
 cbd_Sf <- st_as_sf(cbd, coords = c("long", "lat"), crs = 4269, agr = "identity")
 
+#projection failed, reproject using gdal
+
 #cbd_nad83 <- st_transform(cbd_Sf, 4269)
 
-st_write(cbd_Sf, "./data/spatial/cbd.shp", delete_dsn = TRUE)
+st_write(cbd_Sf, "./data/spatial/cbd_wgs84.shp", delete_dsn = TRUE)
+
+#reproject using shell script in the spatial folder
 
 #write out a quick df of the states of interest for easy filtering later on
  saveRDS( cbd,file = "./data/lehd_state_list.rds")
+ 
+ rm(list = ls())
