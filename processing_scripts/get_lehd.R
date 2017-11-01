@@ -26,7 +26,7 @@ big_lehd <- grab_lodes(state = states_distinct$State, year = years,
  
 
 #filter out all non-aggregate job variables, keep all jobs for entropy measures
-big_lehd <- big_lehd %>% select(1, 9:28, 54:55)
+big_lehd <- big_lehd %>% select(1:2, 9:28, 54:55)
 
 #make a new county id from w_geocode
 
