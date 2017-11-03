@@ -62,7 +62,7 @@ city_growth <- city_growth %>% mutate(Policy = ifelse(NAME %in% c("Los Angeles",
                                                                   "San Jose", "Minneapolis", "New York"), 1, 0))
 ```
 
-##Manufacturing Is Still Here
+##Manufacturing Is Still Here Though It Is Weak
 
 An initial look at this data shows a few things but an important one is that manufacturing still has a legitimate presence in city labor markets in both absolute and relative terms and that the state of manufacturing across cities is decidedly mixed. This first graphic, while admittedly busy, shows the broad pattern of the change in manufacturing employment over time in the nation's largest cities. Most cities, unfortunately, have lost manufacturing employment compared to 2005, corresponding to a more general belief that manufacturing is losing in the country and that cities, especially, are inhospitable places. But there are exceptions. The cities highlighted in red all had positive manufacturing employment growth compared to the blue cities that suffered catstrophic manufacturing job losses.
 
@@ -89,7 +89,7 @@ growth_cities <- city_growth %>% filter(year == "2005" | year == "2015", NAME ==
   select(NAME, Year = year, TotEmp, MfgEmp)
 
 growth_p1 <- ggplot(data = growth_cities, aes(x = NAME, y = MfgEmp, fill = Year)) + 
-  geom_bar(stat = "identity", position = position_dodge()) + theme_ipsum_rc(plot_title_size = 14) +
+  geom_bar(stat = "identity", position = position_dodge()) + theme_ipsum_rc(plot_title_size = 10) +
   labs(title = "Cities Leading the Country in Manufacturing Growth",
        x = "City Name", y = "Manufacturing Employment") + scale_y_comma()
 
@@ -116,14 +116,16 @@ If there is one great shared trait of cities experimenting with industrial land 
 policy_cities <- city_growth %>% filter(Policy == 1)
 
 policy_p1 <- ggplot(data = policy_cities, aes(year, MfgPer)) + geom_bar(stat = "identity", fill = "steelblue") +
-  theme_ipsum_rc(plot_title_size = 14, strip_text_face = "bold") + 
+  theme_ipsum_rc(plot_title_size = 14, strip_text_face = "bold", strip_text_size = 8) + 
   facet_wrap(~NAME, scales = "free", ncol = 4) + scale_y_percent() +
   labs(title = "Mfg. Employment Share for Protective Cities", 
        x = "Year", y = "Mfg. Employment Share (%)",
        caption = "Boston is not included due to lack of available LEHD data")
 
 policy_p1
+```
 
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
 policy_index_plot <- ggplot(policy_cities, aes(year, MfgIndex, group = NAME)) + 
   geom_line() +  
   theme_ipsum_rc(grid = "Y", plot_title_size = 10) +

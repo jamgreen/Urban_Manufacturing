@@ -21,12 +21,51 @@ outlier_cities <- city_growth %>% filter(year == "2015") %>%
 city_growth <- left_join(city_growth, outlier_cities)
 
 city_growth <- city_growth %>% 
-  mutate(OutlierDummy1 = ifelse(MfgIndexZ > 1, 1, 0),
-         OutlierDummy2 = ifelse(IndIndexZ > 1, 1, 0))
+  mutate(OutlierDummy1 = ifelse(MfgIndexZ > 1, "High", ifelse(MfgIndexZ < -1, "Low", "Average")),
+         OutlierDummy2 = ifelse(IndIndexZ > 1, "High", ifelse(IndIndexZ < -1, "Low", "Average")))
 
+city_growth$OutlierDummy1 <- as.factor(city_growth$OutlierDummy1)
+levels(city_growth$OutlierDummy1) <- c("Low", "Average", "High")
 
-p2 <- ggplot(city_growth, aes(year, MfgIndex, group = NAME)) + 
-  geom_line(colour = "grey") + 
-  geom_line(aes(year, MfgIndex, group = NAME, 
-                             color = factor(OutlierDummy1)))
-p2
+city_growth$OutlierDummy2 <- as.factor(city_growth$OutlierDummy2)
+levels(city_growth$OutlierDummy2) <- c("Low", "Average", "High")
+
+city_growth <- city_growth %>% mutate(Policy = ifelse(NAME %in% c("Los Angeles", "Chicago", "San Diego", "Jacksonville",
+                                                                  "San Francisco", "Boston", "Seattle", "Baltimore", "Portland",
+                                                                  "San Jose", "Minneapolis", "New York"), 1, 0))
+
+#show general mfg patterns across largest cities
+
+mfg_index_plot <- ggplot(city_growth, aes(year, MfgIndex, group = NAME, color = OutlierDummy1)) + 
+  geom_line() +  
+  scale_color_manual(values = c("#DCDCDC", "#FF0000", "#0000FF")) +
+  theme_ipsum_rc(grid = "Y") +
+  labs(title = "Change in Mfg Employment for 48 Large Cities, 2005-2015",
+       subtitle = "Mfg. Employment Indexed to 2005 measures",
+       x = "Year", y = "Mfg. Employment Index") +
+  theme(legend.position = "none")
+
+mfg_index_plot
+
+ind_index_plot <- ggplot(city_growth, aes(year, IndIndex, group = NAME, color = OutlierDummy2)) + 
+  geom_line() +  
+  scale_color_manual(values = c("#DCDCDC", "#FF0000", "#0000FF")) +
+  theme_ipsum_rc(grid = "Y") +
+  labs(title = "Change in Industrial Employment for 48 Large Cities, 2005-2015",
+       subtitle = "Ind. Employment Indexed to 2005 measures",
+       x = "Year", y = "Ind. Employment Index") +
+  theme(legend.position = "none")
+
+ind_index_plot
+
+#subset out protective cities and show decling mfg share
+
+policy_cities <- city_growth %>% filter(Policy == 1)
+
+policy_p1 <- ggplot(data = policy_cities, aes(year, MfgPer)) + geom_bar(stat = "identity", fill = "steelblue") +
+  theme_ipsum_rc(plot_title_size = 14, strip_text_face = "bold") + 
+  facet_wrap(~NAME, scales = "free", ncol = 4) + scale_y_percent() +
+  labs(title = "Mfg. Employment Share for Protective Cities", 
+       x = "Year", y = "Mfg. Employment Share (%)")
+
+policy_p1
