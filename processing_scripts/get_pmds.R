@@ -22,6 +22,8 @@ st_write(mizod, "data/spatial/zoning/data/Baltimore_PMD.shp", delete_dsn = TRUE)
 
 pdx <-  st_read(unzip("data/spatial/zoning/data/Portland_OR.zip"), quiet = F)
 pdx <- pdx %>% filter(Zoning %in% c("IG1", "IG2", "IH"))
+pdx <- pdx %>%  group_by(Zoning, Label) %>% summarise() %>% ungroup() %>% 
+  st_as_sf()
 pdx$City <- "Portland"
 st_write(pdx, "data/spatial/zoning/data/Portland_PMD.shp", delete_dsn = TRUE)
 file.remove(list.files(pattern = "Portland_OR*",recursive = F))
