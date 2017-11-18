@@ -82,9 +82,4 @@ sanfran_pmd <- sanfran_pmd %>% group_by(Zoning, Label) %>% summarise() %>% ungro
 st_write(sanfran_pmd, "data/spatial/zoning/data/SanFrancisco_PMD.shp", delete_dsn = TRUE)
 file.remove(list.files(pattern = "SanFrancisco*"), recursive = F)
 
-#new york city
-nyc <- st_read("data/spatial/zoning/data/IBZlots_NYC.geojson")
-nyc_dissolved <- nyc %>% group_by(IBZ.Name) %>% summarise() %>% ungroup() %>% 
-  st_as_sf()
-nyc_dissolved$City <- "New York"
-st_write(nyc_dissolved, "data/spatial/zoning/data/NYC_PMD.shp", delete_dsn = TRUE)
+#new york city, pre-processed beforehand
