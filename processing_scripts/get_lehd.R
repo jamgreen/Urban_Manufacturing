@@ -18,7 +18,7 @@ states_distinct <- study_states %>%  distinct(State)
 
 #download 2004 and 2015 to the data/lehd folder
 
-years <- 2004:2015
+years <- 2002:2015
 
 big_lehd <- grab_lodes(state = states_distinct$State, year = years, 
                        lodes_type = "wac", job_type = "JT01", segment = "S000",
