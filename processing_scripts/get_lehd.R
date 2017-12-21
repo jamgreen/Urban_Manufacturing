@@ -46,8 +46,8 @@ big_lehd <- big_lehd %>% left_join(cbsatocountycrosswalk,
                                    by = c("CountyFIPS" = "fipscounty"))
 
 
-big_lehd <- big_lehd %>% mutate(BG_FIPS = str_sub(w_geocode, 1, 12)) %>% 
-  group_by(BG_FIPS, cbsa, cbsaname, year) %>% summarise_if(is.numeric, funs(sum))
+big_lehd <- big_lehd %>% mutate(bg_fips = str_sub(w_geocode, 1, 12)) %>% 
+  group_by(bg_fips, cbsa, cbsaname, year) %>% summarise_if(is.numeric, funs(sum))
 
 
 
@@ -55,15 +55,23 @@ big_lehd <- big_lehd %>% mutate(BG_FIPS = str_sub(w_geocode, 1, 12)) %>%
 
 big_lehd <- big_lehd %>% filter(!is.na(cbsa))
 
+#copy into industrial_land db for joining later
 
-#join to block group shapefile for now
-
-bg_sf <- lapply(states_distinct$State, function(x) block_groups(state = x))
-bg_sf <- rbind_tigris(bg_sf)
-
-big_lehd <- big_lehd %>% left_join(bg_sf, by = c("BG_FIPS" = "GEOID"))
-big_lehd <- big_lehd %>% ungroup() %>% st_as_sf()
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+p_load(RPostgreSQL, postGIStools, sf,dplyr, dbplyr)
 
 
-saveRDS(big_lehd, file = "data/spatial/lehd_cbsa_sf.RDS")
+#logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
+host <- "pgsql.rc.pdx.edu"
+user <- "jamgreen"
+pw <- "&zSpR-rmd&v5REgZ"
+dbname <- "industrial_land"
+
+con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
+
+big_lehd <- as.data.frame(big_lehd)
+
+DBI::dbWriteTable(conn = con, "lehd_cbsa", big_lehd, overwrite = TRUE)
+
+
 rm(list = ls())
