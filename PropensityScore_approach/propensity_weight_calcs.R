@@ -6,7 +6,7 @@ p_load(RPostgreSQL, postGIStools, sf,dplyr, dbplyr)
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
 host <- "pgsql.rc.pdx.edu"
 user <- "jamgreen"
-pw <- "&zSpR-rmd&v5REgZ"
+pw <- scan("batteries.pgpss", what = "")
 dbname <- "industrial_land"
 
 
