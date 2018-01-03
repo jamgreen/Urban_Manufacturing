@@ -1,6 +1,6 @@
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, car, brglm, lmtest, sandwich, dplyr, dbplyr)
+p_load(RPostgreSQL, car, safeBinaryRegression, brglm, lmtest, sandwich, dplyr, dbplyr)
 
 
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
@@ -75,24 +75,49 @@ log_ind_brglm <- brglm(pmd_dummy ~ IndShare + BlackPer + HispPer + RenterPer + d
                         ind_emp, data = city_lehd_mfg, family = binomial(link = "logit"))
 
 city_lehd_mfg$m1_mfg_val <- predict.glm(log_mfg_brglm, type = "response")
-city_lehd_mfg$m1_ind_val
+city_lehd_mfg$m1_ind_val <- predict.glm(log_ind_brglm, type = "response")
 
 #use the inverse weighting approach for weights, source: http://pareonline.net/pdf/v20n13.pdf
-city_lehd_mfg$m1_ATE_wgt <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$m1_value,
-                                   1/(1 - city_lehd_mfg$m1_value))
+city_lehd_mfg$mfg_ATE_wgt <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$m1_mfg_val,
+                                   1/(1 - city_lehd_mfg$m1_mfg_val))
+
+city_lehd_mfg$ind_ATE_wgt <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$m1_ind_val,
+                                    1/(1 - city_lehd_mfg$m1_ind_val))
 
 #Create new propensity score table for MANUFACTURING ONLY and for blkgrps with 5%> mfg_emp
 
 prop_gt_table <- city_lehd_mfg %>% 
-  select(geoid10 = blk_grp_id, pmd_dummy, prop_score = m1_ATE_wgt, city_name)  
+  select(geoid10 = blk_grp_id, pmd_dummy, prop_score_mfg = mfg_ATE_wgt, 
+         prop_score_ind = ind_ATE_wgt, city_name)  
   
 
-copy_to(con, prop_gt_table ,"prop_score_mfg_only", temporary = FALSE, 
+copy_to(con, prop_gt_table ,"prop_score_mfg_ind", temporary = FALSE, 
         indexes = list("geoid10"), overwrite = TRUE )
 
-#weighted regression model for MFG ONLY block groups with 5%> mfg_emp in 2004------
+#weighted regression models, have to query the db to get 2009 and 2015 emp numbers------
+#**first steps are to create the final model table----
 
-blkgrp_2015 <- readr::read_csv("data/nhgis0013_ds215_20155_2015_blck_grp.csv")
+prop_2009 <- tbl(con, "lehd_model_2009_emp")
+prop_2009 <- collect(prop_2009)
+prop_2015 <- tbl(con, "lehd_model_2015_emp")
+prop_2015 <- collect(prop_2015)
 
-dbClearResult(con)
+prop_final <- prop_2015 %>% select(1, 5:12) %>% inner_join(prop_2009, by = "geoid10")
+prop_final <- prop_final %>% mutate(mfg_change = mfg2015 - mfg2009,
+            ind_2009 = ag2009 + mining2009 + util2009 + mfg2009 + wholesale2009 + transpo2009,
+            ind_2015 = ag2015 + mining2015 + util2015 + mfg2015 + wholesale2015 + transpo2015,
+            ind_change = ind_2015 - ind_2009)
+
+prop_final <- prop_final %>% select(geoid10, city = city_name.x, bg_fips = bg_fips.x,
+                                    pmd_dummy, prop_score_mfg, prop_score_ind,
+                                    mfg_change, ind_change)
+
+#dbClearResult(con)
 dbDisconnect(con)
+
+
+# running the models  city clustered SE
+
+prop_mfg1 <- lm(mfg_change ~ pmd_dummy + factor(geoid10), weights = prop_score_mfg,
+                data = prop_final)
+
