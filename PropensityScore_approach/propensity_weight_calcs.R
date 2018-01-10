@@ -1,6 +1,6 @@
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, car, safeBinaryRegression, brglm, lmtest, sandwich, dplyr, dbplyr)
+p_load(RPostgreSQL, car, brglm, lmtest, sandwich, tableone, survey, dplyr, dbplyr)
 
 
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
@@ -15,7 +15,7 @@ con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, passwo
 
 
 
-city_lehd_dist <- dbGetQuery(con, "select distinct a.blk_grp_id, a.tot_emp, a.ag_emp, a.mining_emp,
+city_lehd_mfg <- dbGetQuery(con, "select distinct a.blk_grp_id, a.tot_emp, a.ag_emp, a.mining_emp,
 a.util_emp, a.mfg_emp, a.wholesale_emp, a.transpo_emp,
 a.place_geoid, a.city_name, b.totpop as totpop, b.white_nh as white_nh, 
 b.black_nh as black_nh, b.hispanic as hispanic, b.mhi as mhi, 
@@ -34,13 +34,14 @@ c.pmd_dummy as pmd_dummy, a.geom
 
 
 
-city_lehd_dist <- city_lehd_dist %>% 
+city_lehd_mfg <- city_lehd_mfg %>% 
   mutate(ind_emp = ag_emp + mining_emp + util_emp + mfg_emp + wholesale_emp + transpo_emp,
-  IndShare = ind_emp/tot_emp, MfgShare = mfg_emp/tot_emp)
+  IndShare = ind_emp/tot_emp, MfgShare = mfg_emp/tot_emp) %>% 
+  distinct(blk_grp_id, .keep_all = TRUE)
 
 
 #filter out blockgroups with greater than 34 tot_emp (first quartile) and replace NAs with 0
-city_lehd_mfg <- city_lehd_dist %>% filter(tot_emp > 34)
+#city_lehd_mfg <- city_lehd_dist %>% filter(tot_emp > 34)
 city_lehd_mfg[is.na(city_lehd_mfg)] <- 0
 
 #calculate population shares for white and non-white
@@ -56,39 +57,45 @@ city_lehd_mfg$RenterPer[is.nan(city_lehd_mfg$RenterPer)] <- 0
 city_dist <- tbl(con, "city_dist_km")
 city_dist <- collect(city_dist)
 
-city_lehd_mfg <- city_lehd_mfg %>% left_join(city_dist, by = c("blk_grp_id" = "blk_grp_id"))
+city_lehd_mfg <- city_lehd_mfg %>% left_join(city_dist, by = c("blk_grp_id" = "blk_grp_id")) 
+
+#city_lehd_mfg <- city_lehd_mfg[!duplicated(city_lehd_mfg$blk_grp_id), ] 
+
 
 #logistic regression for calculating propensity weights----
 
-# log_m1 <- glm(pmd_dummy ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + pop_density, 
-#               data = city_lehd_mfg, family = binomial(link = "logit"))
-# 
+
 # log_m1_brglm <- brglm(pmd_dummy ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + pop_density, 
 # data = city_lehd_mfg, family = binomial(link = "logit"), method = "brglm.fit")
 
-log_mfg_brglm <- brglm(pmd_dummy ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + pop_density + 
-                         mfg_emp, data = city_lehd_mfg, family = binomial(link = "logit"))
+#log_mfg_brglm <- brglm(pmd_dummy ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + pop_density + 
+#                         mfg_emp, data = city_lehd_mfg, family = binomial(link = "logit"))
 
-vif(log_mfg_brglm)
+log_mfg_glm <- glm(pmd_dummy ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + network_density, 
+                   data = city_lehd_mfg, family = binomial(link = "logit"))
 
-log_ind_brglm <- brglm(pmd_dummy ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + pop_density + 
+log_ind_glm <- glm(pmd_dummy ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + 
                         ind_emp, data = city_lehd_mfg, family = binomial(link = "logit"))
 
-city_lehd_mfg$m1_mfg_val <- predict.glm(log_mfg_brglm, type = "response")
-city_lehd_mfg$m1_ind_val <- predict.glm(log_ind_brglm, type = "response")
+city_lehd_mfg$mfg_log_val <- predict.glm(log_mfg_glm, type = "response")
+city_lehd_mfg$ind_log_val <- predict.glm(log_ind_glm, type = "response")
 
 #use the inverse weighting approach for weights, source: http://pareonline.net/pdf/v20n13.pdf
-city_lehd_mfg$mfg_ATE_wgt <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$m1_mfg_val,
-                                   1/(1 - city_lehd_mfg$m1_mfg_val))
+city_lehd_mfg$mfg_ps <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$mfg_log_val,
+                                   1/(1 - city_lehd_mfg$mfg_log_val))
 
-city_lehd_mfg$ind_ATE_wgt <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$m1_ind_val,
-                                    1/(1 - city_lehd_mfg$m1_ind_val))
+city_lehd_mfg$ind_ps <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$ind_log_val,
+                                    1/(1 - city_lehd_mfg$ind_log_val))
 
-#Create new propensity score table for MANUFACTURING ONLY and for blkgrps with 5%> mfg_emp
+#checking to see if re-balances
+prop_mfg_svy <- svydesign(ids = ~ 1, data = city_lehd_mfg, weights = ~ city_lehd_mfg$mfg_ps)
+vars <- c("tot_emp", "mfg_emp", "ind_emp", "MfgShare", "IndShare")
+prof_mfg_table <- svyCreateTableOne(vars = vars, strata = "pmd_dummy", data = prop_mfg_svy, test = FALSE)
+
+#Create new propensity score table for manufacturing and industrial employment
 
 prop_gt_table <- city_lehd_mfg %>% 
-  select(geoid10 = blk_grp_id, pmd_dummy, prop_score_mfg = mfg_ATE_wgt, 
-         prop_score_ind = ind_ATE_wgt, city_name)  
+  select(geoid10 = blk_grp_id, pmd_dummy, mfg_ps, ind_ps, city_name)  
   
 
 copy_to(con, prop_gt_table ,"prop_score_mfg_ind", temporary = FALSE, 
@@ -112,12 +119,19 @@ prop_final <- prop_final %>% select(geoid10, city = city_name.x, bg_fips = bg_fi
                                     pmd_dummy, prop_score_mfg, prop_score_ind,
                                     mfg_change, ind_change)
 
+
+prop_final_mfg <- svydesign(ids = ~ 1, weights = ~ prop_score_mfg, data = prop_final)
 #dbClearResult(con)
 dbDisconnect(con)
 
 
 # running the models  city clustered SE
 
-prop_mfg1 <- lm(mfg_change ~ pmd_dummy + factor(geoid10), weights = prop_score_mfg,
+prop_mfg1 <- lm(mfg_change ~ pmd_dummy, weights = prop_score_mfg,
+                data = prop_final)
+
+prop_mfg1_svy <- svyglm(mfg_change ~ pmd_dummy, design = prop_final_mfg)
+
+prop_mfg2 <- lm(mfg_change ~ pmd_dummy + factor(geoid10), weights = prop_score_mfg,
                 data = prop_final)
 
