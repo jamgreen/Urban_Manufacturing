@@ -1,6 +1,6 @@
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, car, brglm, lmtest, sandwich, tableone, cobalt, ipw, survey, dplyr, dbplyr)
+p_load(RPostgreSQL, car, cobalt, ipw,  dplyr, dbplyr)
 
 
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
