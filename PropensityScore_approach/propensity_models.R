@@ -61,3 +61,6 @@ stable_ind2 <- lm(ind_change ~ pmd_dummy + factor(city), weights = ipw_ind_stabl
                   data = prop_final)
 
 stable_ind2_svy <- svyglm(ind_change ~ pmd_dummy + factor(city), design = prop_ind_stable_svy)
+
+
+
