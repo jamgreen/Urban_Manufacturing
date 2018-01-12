@@ -1,0 +1,160 @@
+---
+title: "Propensity Score Update"
+author: "Jamaal Green"
+date: "1/2/2018"
+output: pdf_document
+bibliography: "dissertation_Oct2017.bib"
+---
+
+```{r setup, include=FALSE, cache = TRUE}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE)
+
+
+
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+p_load(RPostgreSQL, car, cobalt, ipw,  dplyr, dbplyr)
+
+
+#logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
+host <- "pgsql.rc.pdx.edu"
+user <- "jamgreen"
+pw <- "&zSpR-rmd&v5REgZ"
+dbname <- "industrial_land"
+
+
+con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
+
+
+
+
+city_lehd_mfg <- dbGetQuery(con, "select distinct a.blk_grp_id, a.tot_emp, a.ag_emp, a.mining_emp,
+a.util_emp, a.mfg_emp, a.wholesale_emp, a.transpo_emp,
+a.place_geoid, a.city_name, b.totpop as totpop, b.white_nh as white_nh, 
+b.black_nh as black_nh, b.hispanic as hispanic, b.mhi as mhi, 
+b.housing_units as tot_units, b.owner_occ as owner_occ, 
+b.renter_occ as renter_occ,
+d.d3a as network_density, 
+b.totpop/(ST_Area(a.geom)/1000000) as pop_density,
+c.pmd_dummy as pmd_dummy, a.geom
+	FROM lehd_places_2004_nad83albers a 
+		LEFT JOIN propensity_blkgrp b ON
+		a.blk_grp_id = b.geoid 
+		LEFT JOIN lehd04_pmd c ON
+		a.blk_grp_id = c.blk_grp_id
+		LEFT JOIN epa_sld d ON
+		a.blk_grp_id = d.geoid10;")
+
+
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(ind_emp = ag_emp + mining_emp + util_emp + mfg_emp + wholesale_emp + transpo_emp,
+  IndShare = ind_emp/tot_emp, MfgShare = mfg_emp/tot_emp) %>% 
+  distinct(blk_grp_id, .keep_all = TRUE)
+
+
+#filter out blockgroups with greater than 34 tot_emp (first quartile) and replace NAs with 0
+#city_lehd_mfg <- city_lehd_dist %>% filter(tot_emp > 34)
+city_lehd_mfg[is.na(city_lehd_mfg)] <- 0
+
+#calculate population shares for white and non-white
+city_lehd_mfg <- city_lehd_mfg %>% mutate(BlackPer = black_nh/totpop, HispPer = hispanic/totpop,
+                                          RenterPer = renter_occ/tot_units)
+
+city_lehd_mfg$BlackPer[is.nan(city_lehd_mfg$BlackPer)] <- 0
+city_lehd_mfg$HispPer[is.nan(city_lehd_mfg$HispPer)] <- 0
+city_lehd_mfg$RenterPer[is.nan(city_lehd_mfg$RenterPer)] <- 0
+
+#join to the city_dist table for final calcs
+
+city_dist <- tbl(con, "city_dist_km")
+city_dist <- collect(city_dist)
+
+city_lehd_mfg <- city_lehd_mfg %>% left_join(city_dist, by = c("blk_grp_id" = "blk_grp_id")) %>% 
+  distinct(blk_grp_id, .keep_all = TRUE)
+
+city_lehd_mfg$pmd <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1, 0)
+
+#using ipw to compare the weights calculation-----
+temp_mfg_stabilized <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
+                                numerator = ~ 1, 
+                                denominator = ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + network_density,
+                                data = city_lehd_mfg)
+
+temp_mfg_unstabilized <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
+                                  denominator = ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + network_density,
+                                  data = city_lehd_mfg)
+
+
+temp_ind_stable <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
+                            numerator = ~ 1, 
+                            denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + 
+                              ind_emp,
+                            data = city_lehd_mfg)
+
+temp_ind_unstable <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
+                              denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + network_density,
+                              data = city_lehd_mfg)
+
+city_lehd_mfg$ipw_ind_stable <- temp_ind_stable$ipw.weights
+city_lehd_mfg$ipw_ind_unstable <- temp_ind_unstable$ipw.weights
+
+city_lehd_mfg$ipw_mfg_stable <- temp_mfg_stabilized$ipw.weights
+city_lehd_mfg$ipw_mfg_unstable <- temp_mfg_unstabilized$ipw.weights
+```
+
+## Introduction
+
+In order to test the effectiveness of PMD-style land-use policies I collected block group level employment data from the LEHD for the years 2004, 2009, and 2015 for 47 of the country's 50 largest cities (three cities were dropped due to data availability issues of the LEHD) and 2005-2009 ACS data for the initial logistic model in order to calculate propensity weights. What follows is a description of the process thus far and some outstanding issues regarding the propensity score model specification. 
+
+##Data
+
+The unit of analysis is the census block group- a census geography that holds between 600 and 3000 people. Within the 47 cities there are 33,985 block groups with either employment only data from the LEHD, population only data from the ACS, or some combination therein. From the LEHD I collected total employment, manufacturing and "industrial" employment (the sum of agricultural, mining, utilities, transportation/warehousing, wholesale trade, and manufacturing). From the ACS I collected total population, Non-Hispanic Whites, Non-Hispanic Blacks, Hispanics, the total number of housing units, and owner/renter occupied units. From the EPA Smart Location Database I collected the street network density of each block group. Finally, I calculated the distance from the city center to each block group's centroid in kilometers.
+
+While a hefty sample, the 33,995 block groups are still primarily residential districts with minimal employment. As such, the distribution for jobs within cities are extremely left skewed with most block groups having zero employment or only a few jobs. This is to be expected given the primarily residential nature of most neighborhoods and that manufacturing/industrial employment is usually concentrated in specific block groups due to zoning restrictions.  
+
+| Industry  | Min. | 1st Qu. | Median |  Mean | 3rd Qu. |   Max  |
+|-----------|:----:|:-------:|:------:|:-----:|:-------:|:------:|
+| Mfg. Emp  |   0  |    0    |    0   | 56.91 |    6    | 25,528 |
+| Ind. Emp  |   0  |    0    |    4   | 133.1 |    28   | 57,130 |
+| Total Emp |   0  |    34   |   119  | 690.4 |   403   | 202,442 |
+
+Table 1: Summary Employment Statistics for Full Dataset
+
+Of the 33,985 block groups only 155 of them are covered by a industrial preservation policy or 0.4% of all block groups.The 0.45% of block groups covered by an industrial preservation policy have a significantly higher number of all jobs, manufacturing, and industrial jobs than non-covered block groups.
+
+
+
+##Propensity Score Model
+
+
+In order to accurately estimate the effect of the preservation policies on manufacturing and industrial employment I am using a propensity score approach [@AustinIntroductionPropensityScore2011; @Rosenbaumcentralrolepropensity1983]. Propensity scores are the probability of a unit of observation receiving treatment conditioned on a set of characteristics. Traditionally, researchers use a logistic or probit regression in order to estimate the probabilities and then calculate weights using the probabilities. For this project I am using the inverse probability method with the goal of estimating the Average Treatment Effect (ATE) which is the average effect of moving the entire population from control to treatment (in this case transitioning block groups to industrial preservation). Once the propensity score is estimated and the weights calculated the weights are used in a weighted regression of the treatment indicator variable regressed on the dependent variable. If the indicator variable is significant, then this signals a causal effect of the treatment on your observation. 
+
+In order to calculate weights I estimated an initial logistic regression calculating predicted probability of a block group being covered by an industrial preservation policy:
+
+$$E(y|x) = \beta_0 + \beta_1 x_1... + \beta_k x_k$$
+
+The regressors here are share of employment that is manufacturing or industrial, percent of the block group population that is Non-Hispanic Black, percent of the block group that is Hispanic, percent of block group's housing units that are renter occupied, distance from the city central business district to the block group centroid in kilometers, and street network density. 
+
+| Variable                   |    Year    | Data Source |
+|----------------------------|:----------:|------------:|
+| % Black                    | 2005-2009  |         ACS |
+| % Hispanic                 | 2005-2009  |         ACS |
+| % Manufacturing/Industrial |    2004    |        LEHD |
+| Distance from CBD (km)     |      -     |  Calculated |
+| Street Network Density     |    2010    |     EPA SLD |
+
+Table 2: Independent variables for the logit model 
+
+###Unstabilized and Stabilized Propensity Weights
+
+
+
+
+
+#References
+
+
+
+<!---Running the first logistic model I received an error that my full model (manufacturing share, % Black, % Hispanic, % Renter, distance from city center, population density, total manufacturing employment) exhibited complete separation. This means that one of my covariates perfectly predicts my dependent variable. This generally results in unnaturally large regression coefficients and larger standard errors.--->
