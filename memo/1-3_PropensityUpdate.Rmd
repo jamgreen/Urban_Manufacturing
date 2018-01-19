@@ -2,8 +2,11 @@
 title: "Propensity Score Update"
 author: "Jamaal Green"
 date: "1/2/2018"
-output: pdf_document
-bibliography: "dissertation_Oct2017.bib"
+output:
+  pdf_document: default
+  word_document: default
+  md_document:  default
+bibliography: dissertation_Oct2017.bib
 ---
 
 ```{r setup, include=FALSE, cache = TRUE}
@@ -14,7 +17,7 @@ knitr::opts_chunk$set(
 
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, car, cobalt, ipw,  dplyr, dbplyr)
+p_load(RPostgreSQL, stargazer, texreg, pander, lmtest, multiwayvcov, cobalt, ipw,  dplyr, dbplyr)
 
 
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
@@ -83,14 +86,13 @@ temp_mfg_stabilized <- ipwpoint(exposure = pmd_dummy, family = "binomial", link 
                                 data = city_lehd_mfg)
 
 temp_mfg_unstabilized <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
-                                  denominator = ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + network_density,
+                                  denominator = ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km +    network_density,
                                   data = city_lehd_mfg)
 
 
 temp_ind_stable <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
                             numerator = ~ 1, 
-                            denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + 
-                              ind_emp,
+                            denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km,
                             data = city_lehd_mfg)
 
 temp_ind_unstable <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
@@ -102,6 +104,26 @@ city_lehd_mfg$ipw_ind_unstable <- temp_ind_unstable$ipw.weights
 
 city_lehd_mfg$ipw_mfg_stable <- temp_mfg_stabilized$ipw.weights
 city_lehd_mfg$ipw_mfg_unstable <- temp_mfg_unstabilized$ipw.weights
+
+#weighted regression models, have to query the db to get 2009 and 2015 emp numbers------
+#**first steps are to create the final model table----
+
+prop_2009 <- tbl(con, "lehd_model_2009_emp")
+prop_2009 <- collect(prop_2009)
+prop_2015 <- tbl(con, "lehd_model_2015_emp")
+prop_2015 <- collect(prop_2015)
+
+prop_final <- prop_2015 %>% select(1, 12:17) %>% inner_join(prop_2009, by = "geoid10")
+
+prop_final <- prop_final %>% mutate(mfg_change = mfg2015 - mfg2009,
+            ind_2009 = ag2009 + mining2009 + util2009 + mfg2009 + wholesale2009 + transpo2009,
+            ind_2015 = ag2015 + mining2015 + util2015 + mfg2015 + wholesale2015 + transpo2015,
+            ind_change = ind_2015 - ind_2009)
+
+prop_final <- prop_final %>% select(geoid10, city = city_name, bg_fips,
+                                    pmd_dummy, mfg_ps, ipw_mfg_stable, ipw_mfg_unstable,
+                                    ind_ps, ipw_ind_stable, ipw_ind_unstable,
+                                    mfg_change, ind_change)
 ```
 
 ## Introduction
@@ -149,8 +171,150 @@ Table 2: Independent variables for the logit model
 
 ###Unstabilized and Stabilized Propensity Weights
 
+There are two main approaches for calculating propensity weights once the predicted probabilities are calculated- stabilized and unstabilized weights. The equation for unstabilized inverse probability weights for observations in treatment group is $\omega = 1/\hat{e}(x)$ and for the control group $\omega = 1/1-\hat{e}(x)$. While often used, unstabilized weights can have very wide distributions of weights and can hamper overall model efficiency. Stabilized weights add a term to the numerator, in the case of this model the numerator is the probability of the exposure level, in this case it is simply an intercept only logistic regression on the treatment variable- $s\omega_i = \beta_0/E(y|x)$. The following models use both stabilized and unstabilized weights calculated by the ipw package in the R Statistical Programming Lanugage version 3.4.2.
+
+The following logitics regression tables show the underlying models that will be used to calculate the eventual weights. All dependent variables are significant and follow their expected signs. Table 4 shows the moderating influence of standardizing weights significantly shrinking the size and distribution of weights for the manufacturing and industrial employment models. 
+
+ 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+
+require(stargazer)
+
+stargazer(temp_mfg_unstabilized$den.mod, temp_ind_stable$den.mod, title = "Logit Models for The Probability of Treatment for Manufacturing and Industrial Jobs", type = "latex", column.labels = c("Manufacturing", "Industry"), header = FALSE)
+
+```
+
+\pagebreak
+
+| Weight Label      |  Min. | 1st Qu. | Median | Mean  | 3rd Qu. | Max      |
+|-------------------|:-----:|--------:|--------|-------|---------|----------|
+| Mfg. Unstabilized |  1.00 |   1.002 | 1.003  | 1.849 | 1.005   | 1587.922 |
+| Mfg. Stabilized   | 0.023 |   0.997 | 0.998  | 0.999 | 1.000   | 7.242    |
+| Ind. Unstabilized | 1.000 |   1.001 | 1.002  | 1.696 | 1.004   | 1377.630 |
+| Ind. Stabilized   | 0.022 |   0.996 | 0.997  | 0.999 | 0.999   | 6.283    |
+
+Table 4: Stabilized and Unstabilized Propensity Score Weights for Industrial and Manufacturing Employment Models
 
 
+While the stabilized and usntabilized weights give a sense of the different distributions of weights across models we are more interested in whether the weights properly balance model covariates. In order to assess the accuracy of the weighting I calculated the standardized mean differences for the model's main covariates using R's cobalt package [@GreifercobaltCovariateBalance2018]. Generally, standardized differences should be as close to 0 as possible and conservative measures place an upper limit between .1 and .25. Using these measures all variables in the propensity score  model except for the share of employment in manufacturing or industrial employment are appropriately balanced. While not perfect, these balance estimates do imply a reasonably balanced dataset and bias reduction.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+require(dplyr)
+require(pander)
+require(cobalt)
+
+unstable_mfg <- city_lehd_mfg %>% select(MfgShare, RenterPer, BlackPer,
+                                         HispPer, network_density, dist_km)
+
+mfg_bal <- bal.tab(unstable_mfg, treat = city_lehd_mfg$pmd, weights = city_lehd_mfg$ipw_mfg_unstable)
+
+myvars <- c("RenterPer", "BlackPer", "HispPer", "network_density", "dist_km", "IndShare")
+unstable_ind <- city_lehd_mfg[myvars]
+
+ind_bal <- bal.tab(unstable_ind, treat = city_lehd_mfg$pmd, weights = city_lehd_mfg$ipw_ind_stable)
+
+ind_tbl <- tibble::tribble(~Variable,	~`Std. Mean Diff.`,
+"IndShare",	0.7545,
+"RenterPer",	-0.0813,
+"BlackPer",	0.0158,
+"HispPer",	0.0666,
+"network_density",	-0.4115,
+"dist_km",	0.209) 
+
+mfg_tbl <- tibble::tribble(~Variable,	~`Std. Mean Diff.`,
+"MfgShare",	0.4259,
+"RenterPer",	-0.0035,
+"BlackPer",	-0.0119,
+"HispPer",	0.0974,
+"network_density",	0.0312,
+"dist_km",	0.0004
+)
+
+pander(mfg_tbl, justify = c("left", "right"), caption = "Standardized Mean Difference Scores for the Manufacturing Model")
+
+pander(ind_tbl, justify = c("left", "right"), caption = "Standardized Mean Difference Scores for the Industrial Model")
+
+```
+
+
+##Final Model Results
+
+###Manufacturing
+
+Ultimately, industrial preservation policies do not have statistically significant effects on the change in manufacturing or industrial employment between 2009 and 2015 for any model using the stabilized weights or that used clustered standard errors. 
+
+Table 7 presents the final propensity score models for manufacturing employment change using standard OLS estimation and clustered robust standard errors on both stabilized and unstabilized weights. Using standard OLS estimations show a positive and significant averate treatment effect (ATE) of approximately 14.2 jobs. This means that if all block groups were to be treated we would expect to see a gain of 14.2 jobs between 2009 and 2015. Correcting for the clustered nature of the data shows a non-significant, though positive, effect of an industrial preservation policy.[^1] 
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+
+require(texreg)
+#unstable manufacturing
+
+unstable_mfg1 <- lm(mfg_change ~ pmd_dummy, weights = mfg_ps, data = prop_final)
+
+mfg_unstable_cluster <- multiwayvcov::cluster.vcov(unstable_mfg1, cluster = prop_final$city)
+cf_mfg1 <- lmtest::coeftest(unstable_mfg1, mfg_unstable_cluster)
+
+stable_mfg1 <-lm(mfg_change ~ pmd_dummy, weights = ipw_mfg_stable, data = prop_final)
+
+mfg_stable_cluster <- multiwayvcov::cluster.vcov(stable_mfg1, cluster = prop_final$city)
+cf_stable_mfg1 <- lmtest::coeftest(stable_mfg1, mfg_stable_cluster)
+
+
+#unstable_mfg2 <- lm(mfg_change ~ pmd_dummy + factor(city), weights = mfg_ps,data = prop_final)
+
+
+# Adjust standard errors https://www.jakeruss.com/cheatsheets/stargazer/
+#unstable_mfg1_vcov    <- vcovCR(unstable_mfg1, type = "CR1", cluster = "city")
+#unstable_mfg1_robust_se    <- sqrt(diag(unstable_mfg1_vcov))
+
+# adjust f-test
+#unstable_mfg1_wald_results <- waldtest(unstable_mfg1, vcov = unstable_mfg1_vcov)
+
+#stargazer(unstable_mfg1, lmtest::coeftest(unstable_mfg1, mfg_unstable_cluster), type = "latex", header = FALSE, #title = "Change in Manufacturing Employment with Unstabilized Weights")                             
+
+texreg(list(unstable_mfg1, cf_mfg1, stable_mfg1, cf_stable_mfg1), 
+       custom.model.names = c("OLS Unstable", "CRSE Unstable", "OLS Stabilized", "CRSE Stabilized"),
+       label = "tab:5", 
+       caption = "Propensity Score Model of Change in Manufacturing Employment (2009-2015) with Stabilized and Unstabilized Weights", caption.above = TRUE)
+```
+
+
+###Industrial
+
+Industrial employment, a composite variable made up of the sum of agriculatural, mining, utilities, warehousing, transportation, and manufacturing employment benefitted from industrial land use preservation. Industrial land preservation policies result in a positive and significant change in industrial employment across all model specifications. Accroding to the final propensity scored model the ATE of the industrial preservation policy is a little over 176.5 between 2009 and 2015.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+
+#unstable and stabilized industrial
+
+unstable_ind1 <- lm(ind_change ~ pmd_dummy, weights = ind_ps, data = prop_final)
+
+ind_unstable_cluster <- multiwayvcov::cluster.vcov(unstable_ind1, cluster = prop_final$city)
+cf_ind1 <- lmtest::coeftest(unstable_ind1, ind_unstable_cluster)
+
+stable_ind1 <-lm(ind_change ~ pmd_dummy, weights = ipw_ind_stable, data = prop_final)
+
+ind_stable_cluster <- multiwayvcov::cluster.vcov(stable_ind1, cluster = prop_final$city)
+cf_stable_ind1 <- lmtest::coeftest(stable_ind1, ind_stable_cluster)
+
+
+texreg(list(unstable_ind1, cf_ind1, stable_ind1, cf_stable_ind1), 
+       custom.model.names = c("OLS Unstable", "CRSE Unstable", "OLS Stabilized", "CRSE Stabilized"),
+       label = "tab:5", 
+       caption = "Propensity Score Model of Change in Industrial Employment (2009-2015) with Stabilized and Unstabilized Weights", caption.above = TRUE)
+```
+
+##Discussion
+
+Given the model results industrial land preservation policies had a non-significant effect on the change in manufacturing employment form 2009-2015 but such policies did have a positive and significant effect for the broader category of industrial jobs. This positive and significant effect was maintained after correcting for potential bias by clustering standard errors at the city level. The model specification demonstrates a causal link between industrial land preservation policies and the protection of industrial jobs through the Great Recession and the first couple of years of recovery. Endogeneity concerns were addressed by using inverse probability weights calculated using a propensity score approach. 
+
+[^1]: Tables were produced using the stargazer package [@MarkHlavacStargazer2015]
 
 
 #References

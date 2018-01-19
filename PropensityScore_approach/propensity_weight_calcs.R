@@ -97,7 +97,7 @@ temp_mfg_unstabilized <- ipwpoint(exposure = pmd_dummy, family = "binomial", lin
 temp_ind_stable <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
                             numerator = ~ 1, 
                             denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + 
-                              ind_emp,
+                              network_density,
                             data = city_lehd_mfg)
 
 temp_ind_unstable <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
