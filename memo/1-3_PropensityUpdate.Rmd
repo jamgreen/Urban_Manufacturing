@@ -132,7 +132,7 @@ In order to test the effectiveness of PMD-style land-use policies I collected bl
 
 ##Data
 
-The unit of analysis is the census block group- a census geography that holds between 600 and 3000 people. Within the 47 cities there are 33,985 block groups with either employment only data from the LEHD, population only data from the ACS, or some combination therein. From the LEHD I collected total employment, manufacturing and "industrial" employment (the sum of agricultural, mining, utilities, transportation/warehousing, wholesale trade, and manufacturing). From the ACS I collected total population, Non-Hispanic Whites, Non-Hispanic Blacks, Hispanics, the total number of housing units, and owner/renter occupied units. From the EPA Smart Location Database I collected the street network density of each block group. Finally, I calculated the distance from the city center to each block group's centroid in kilometers.
+The unit of analysis is the census block group- a census geography that holds between 600 and 3000 people. Within the 47 cities there are 33,985 block groups with either employment only data from the LEHD, population only data from the ACS, or some combination therein. From the LEHD I collected total employment, manufacturing and "industrial" employment (the sum of agricultural, mining, utilities, transportation/warehousing, wholesale trade, and manufacturing). From the ACS I collected total population, Non-Hispanic Whites, Non-Hispanic Blacks, Hispanics, the total number of housing units, and owner/renter occupied units (all race/ethnicity data from single race reports). From the EPA Smart Location Database I collected the street network density of each block group. Finally, I calculated the Euclidean distance from the city center to each block group's centroid in kilometers.
 
 While a hefty sample, the 33,995 block groups are still primarily residential districts with minimal employment. As such, the distribution for jobs within cities are extremely left skewed with most block groups having zero employment or only a few jobs. This is to be expected given the primarily residential nature of most neighborhoods and that manufacturing/industrial employment is usually concentrated in specific block groups due to zoning restrictions.  
 
@@ -144,7 +144,7 @@ While a hefty sample, the 33,995 block groups are still primarily residential di
 
 Table 1: Summary Employment Statistics for Full Dataset
 
-Of the 33,985 block groups only 155 of them are covered by a industrial preservation policy or 0.4% of all block groups.The 0.45% of block groups covered by an industrial preservation policy have a significantly higher number of all jobs, manufacturing, and industrial jobs than non-covered block groups.
+Of the 33,985 block groups only 155 of them are covered by a industrial preservation policy or 0.4% of all block groups.The 0.45% of block groups covered by an industrial preservation policy have a  higher number of all jobs, manufacturing, and industrial jobs than non-covered block groups.
 
 
 
@@ -244,7 +244,7 @@ pander(ind_tbl, justify = c("left", "right"), caption = "Standardized Mean Diffe
 
 ###Manufacturing
 
-Ultimately, industrial preservation policies do not have statistically significant effects on the change in manufacturing or industrial employment between 2009 and 2015 for any model using the stabilized weights or that used clustered standard errors. 
+In order to evaluate the effect of an industrial preservation policy, I estimated a propensity score regression regressing the change in manufacturing employment from 2009-2015 on whether or not a block group is covered by an industrial land use preservation policy. Ultimately, industrial preservation policies do not have statistically significant effects on the change in manufacturing or industrial employment between 2009 and 2015 for any model using the stabilized weights or that used clustered standard errors. 
 
 Table 7 presents the final propensity score models for manufacturing employment change using standard OLS estimation and clustered robust standard errors on both stabilized and unstabilized weights. Using standard OLS estimations show a positive and significant averate treatment effect (ATE) of approximately 14.2 jobs. This means that if all block groups were to be treated we would expect to see a gain of 14.2 jobs between 2009 and 2015. Correcting for the clustered nature of the data shows a non-significant, though positive, effect of an industrial preservation policy.[^1] 
 
