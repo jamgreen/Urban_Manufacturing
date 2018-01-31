@@ -92,11 +92,12 @@ temp_mfg_unstabilized <- ipwpoint(exposure = pmd_dummy, family = "binomial", lin
 
 temp_ind_stable <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
                             numerator = ~ 1, 
-                            denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km,
+                            denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + 
+                              network_density,
                             data = city_lehd_mfg)
 
 temp_ind_unstable <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
-                              denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + network_density,
+                              denominator = ~ IndShare + BlackPer + HispPer + RenterPer + dist_km +                                 network_density,
                               data = city_lehd_mfg)
 
 city_lehd_mfg$ipw_ind_stable <- temp_ind_stable$ipw.weights
@@ -197,7 +198,7 @@ stargazer(temp_mfg_unstabilized$den.mod, temp_ind_stable$den.mod, title = "Logit
 Table 4: Stabilized and Unstabilized Propensity Score Weights for Industrial and Manufacturing Employment Models
 
 
-While the stabilized and usntabilized weights give a sense of the different distributions of weights across models we are more interested in whether the weights properly balance model covariates. In order to assess the accuracy of the weighting I calculated the standardized mean differences for the model's main covariates using R's cobalt package [@GreifercobaltCovariateBalance2018]. Generally, standardized differences should be as close to 0 as possible and conservative measures place an upper limit between .1 and .25. Using these measures all variables in the propensity score  model except for the share of employment in manufacturing or industrial employment are appropriately balanced. While not perfect, these balance estimates do imply a reasonably balanced dataset and bias reduction.
+While the stabilized and usntabilized weights give a sense of the different distributions of weights across models we are more interested in whether the weights properly balance model covariates. In order to assess the accuracy of the weighting I calculated the standardized mean differences for the model's main covariates using R's cobalt package [@GreifercobaltCovariateBalance2018]. Generally, standardized differences should be as close to 0 as possible and conservative measures place an upper limit between .1 and .25. Using these measures all variables in the propensity score  model except for the share of employment in manufacturing or industrial employment and network density for the industrial employment model are appropriately balanced. While not perfect, these balance estimates do imply a reasonably balanced dataset and bias reduction.
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -211,7 +212,7 @@ unstable_mfg <- city_lehd_mfg %>% select(MfgShare, RenterPer, BlackPer,
 
 mfg_bal <- bal.tab(unstable_mfg, treat = city_lehd_mfg$pmd, weights = city_lehd_mfg$ipw_mfg_unstable)
 
-myvars <- c("RenterPer", "BlackPer", "HispPer", "network_density", "dist_km", "IndShare")
+myvars <- c("IndShare", "RenterPer", "BlackPer", "HispPer", "network_density", "dist_km")
 unstable_ind <- city_lehd_mfg[myvars]
 
 ind_bal <- bal.tab(unstable_ind, treat = city_lehd_mfg$pmd, weights = city_lehd_mfg$ipw_ind_stable)
@@ -314,7 +315,7 @@ texreg(list(unstable_ind1, cf_ind1, stable_ind1, cf_stable_ind1),
 
 Given the model results industrial land preservation policies had a non-significant effect on the change in manufacturing employment form 2009-2015 but such policies did have a positive and significant effect for the broader category of industrial jobs. This positive and significant effect was maintained after correcting for potential bias by clustering standard errors at the city level. The model specification demonstrates a causal link between industrial land preservation policies and the protection of industrial jobs through the Great Recession and the first couple of years of recovery. Endogeneity concerns were addressed by using inverse probability weights calculated using a propensity score approach. 
 
-[^1]: Tables were produced using the stargazer package [@MarkHlavacStargazer2015]
+[^1]: Tables were produced using  both the stargazer [@MarkHlavacStargazer2015] and texreg [@LeifeldtexregConversionStatistical2013] packages
 
 
 #References

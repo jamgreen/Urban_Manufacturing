@@ -65,24 +65,6 @@ city_lehd_mfg$pmd <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1, 0)
 #city_lehd_mfg <- city_lehd_mfg[!duplicated(city_lehd_mfg$blk_grp_id), ] 
 
 
-#logistic regression for calculating propensity weights----
-
-log_mfg_glm <- glm(pmd_dummy ~ MfgShare + BlackPer + HispPer + RenterPer + dist_km + network_density, 
-                   data = city_lehd_mfg, family = binomial(link = "logit"))
-
-log_ind_glm <- glm(pmd_dummy ~ IndShare + BlackPer + HispPer + RenterPer + dist_km + 
-                        ind_emp, data = city_lehd_mfg, family = binomial(link = "logit"))
-
-city_lehd_mfg$mfg_log_val <- predict.glm(log_mfg_glm, type = "response")
-city_lehd_mfg$ind_log_val <- predict.glm(log_ind_glm, type = "response")
-
-#use the inverse weighting approach for weights, source: http://pareonline.net/pdf/v20n13.pdf
-city_lehd_mfg$mfg_ps <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$mfg_log_val,
-                                   1/(1 - city_lehd_mfg$mfg_log_val))
-
-city_lehd_mfg$ind_ps <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1/city_lehd_mfg$ind_log_val,
-                                    1/(1 - city_lehd_mfg$ind_log_val))
-
 #using ipw to compare the weights calculation-----
 temp_mfg_stabilized <- ipwpoint(exposure = pmd_dummy, family = "binomial", link = "logit",
                                 numerator = ~ 1, 
@@ -135,10 +117,31 @@ copy_to(con, prop_gt_table ,"prop_score_mfg_ind", temporary = FALSE,
 #weighted regression models, have to query the db to get 2009 and 2015 emp numbers------
 #**first steps are to create the final model table----
 
-prop_2009 <- tbl(con, "lehd_model_2009_emp")
-prop_2009 <- collect(prop_2009)
-prop_2015 <- tbl(con, "lehd_model_2015_emp")
-prop_2015 <- collect(prop_2015)
+prop_2009 <- dbGetQuery(con, "DROP TABLE IF EXISTS lehd_model_2009_emp;
+CREATE TABLE lehd_model_2009_emp AS
+select *
+from prop_score_mfg_ind  LEFT JOIN
+(SELECT bg_fips,'C000' as tot_emp, 'CNS01' as ag2009, 'CNS02' as mining2009, 'CNS03' as util2009, 
+'CNS05' as mfg2009, 'CNS06' as wholesale2009, 'CNS08' as transpo2009
+FROM lehd_cbsa
+where year = '2009') b ON
+prop_score_mfg_ind.geoid10 = b.bg_fips;
+")
+
+prop_2015 <- dbGetQuery(con, "DROP TABLE IF EXISTS lehd_model_2009_emp;
+CREATE TABLE lehd_model_2009_emp AS
+select *
+from prop_score_mfg_ind  LEFT JOIN
+(SELECT bg_fips,'C000' as tot_emp, 'CNS01' as ag2009, 'CNS02' as mining2009, 'CNS03' as util2009, 
+'CNS05' as mfg2009, 'CNS06' as wholesale2009, 'CNS08' as transpo2009
+FROM lehd_cbsa
+where year = '2015') b ON
+prop_score_mfg_ind.geoid10 = b.bg_fips;
+")
+#tbl(con, "lehd_model_2009_emp")
+#prop_2009 <- collect(prop_2009)
+#prop_2015 <- tbl(con, "lehd_model_2015_emp")
+#prop_2015 <- collect(prop_2015)
 
 prop_final <- prop_2015 %>% select(1, 12:17) %>% inner_join(prop_2009, by = "geoid10")
 
