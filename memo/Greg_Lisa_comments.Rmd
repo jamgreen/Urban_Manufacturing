@@ -1,0 +1,37 @@
+---
+title: "notes from greg"
+author: "Jamaal Green"
+date: "1/25/2018"
+output: html_document
+---
+
+The study includes all block groups in 47 cities 
+
+Filter down values having 2 industrial jobs. The minimum number of jobs of block groups *covered* by a pmd policy 
+
+Make a note...these are 155 block groups, representing 10 cities out of 12 cities with a pmd kind of policy
+
+Background/Contextal Info...Descriptive Stats
+
+* Give me some background info on the significance of the covered block groups...what percentage of industrial jobs are covered by PMDs in the cities
+* Number of jobs, average number of jobs (ridgeplot??)
+
+Explain your covariates in the logit model...what is the logic behind them?
+
+Show propensity scores for covered and uncovered block groups
+
+Consider any additional covariates for the final model...like age of the policy
+
+##On the Case Study
+
+What are the stories here?
+
+Do these policies strengthen planners? Does it weaken them?
+
+How does this actually work on the ground? Does it matter at all?
+
+#From Lisa
+
+What does this mean? Give interpretation of what would be a menaingful result? Is it significant but not meaningful? What were you looking for?
+
+What is the actual question that this analysis answers?
