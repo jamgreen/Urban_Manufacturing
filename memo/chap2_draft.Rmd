@@ -1,0 +1,23 @@
+---
+title: 'Keeping Space for Jobs: Evaluating Industrial Land Protection Policies'
+author: "Jamaal Green"
+date: "3/13/2018"
+output: pdf_document
+bibliography: tmp-clean-file.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+##Introduction
+
+There is recognition in growing, large US cities that industrial lands are vital resources that must be protected. In order to better protect these lands nearly a dozen of the nation's largest cities have passed industrial land protection policies, with many passing such policies in the past 15 years [@green_zoning_2018]. While there is a growing body of research examining the linkages between local land-use and labor market change [@chapple_highest_2014; @lester_long_2014] - especially with respect to the conversion of industrial land lands to non-industrial use- to date, there has not been a study that has evaluated the effectiveness of these preservation projects at preserving, and even growing, industrial and manufacturing jobs.
+
+
+
+##References

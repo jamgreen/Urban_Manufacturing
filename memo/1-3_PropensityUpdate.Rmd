@@ -164,6 +164,7 @@ The regressors here are share of employment that is manufacturing or industrial,
 |----------------------------|:----------:|------------:|
 | % Black                    | 2005-2009  |         ACS |
 | % Hispanic                 | 2005-2009  |         ACS |
+| % Renter                   | 2005-2009  |         ACS |
 | % Manufacturing/Industrial |    2004    |        LEHD |
 | Distance from CBD (km)     |      -     |  Calculated |
 | Street Network Density     |    2010    |     EPA SLD |
