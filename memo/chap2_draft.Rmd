@@ -2,7 +2,9 @@
 title: 'Keeping Space for Jobs: Evaluating Industrial Land Protection Policies'
 author: "Jamaal Green"
 date: "3/13/2018"
-output: pdf_document
+output: 
+  pdf_document:
+    number_sections: TRUE
 bibliography: tmp-clean-file.bib
 ---
 
@@ -14,10 +16,36 @@ knitr::opts_chunk$set(
 )
 ```
 
-##Introduction
+#Introduction
 
-There is recognition in growing, large US cities that industrial lands are vital resources that must be protected. In order to better protect these lands nearly a dozen of the nation's largest cities have passed industrial land protection policies, with many passing such policies in the past 15 years [@green_zoning_2018]. While there is a growing body of research examining the linkages between local land-use and labor market change [@chapple_highest_2014; @lester_long_2014] - especially with respect to the conversion of industrial land lands to non-industrial use- to date, there has not been a study that has evaluated the effectiveness of these preservation projects at preserving, and even growing, industrial and manufacturing jobs.
+The story of US deindustrialization is well known. From the decentralization of industrial plants from union heavy northern areas to the offshoring of production to Asia, the general narrative of US manufacturing employment is one of traumatic decline that devastates communities and is responsible for growing income inequality [@BluestonedeindustrializationAmericaPlant1982].These losses are often attributed to growing productivity, skill biased technical change or labor copetition from lower cost countries [@WeaverSkillDemandsMismatch2016]. But this narrative may overstate possible effects missing alternative explanations such as the role of changing corporate strategy and structure on management decision [@BergerHowFinanceGutted2014]. Urban planners, geographers, and regional economic development shcolars are now highlightling another potential major factor in local deindustrialization-- local and regional land use management, specifically, the loss of land available for industry.
+
+Recent research has tracked the dramatic loss of industrially zoned land in growing, large US cities. Recent analyses from Leigh and Hoelzel [-@LeighSmartGrowthBlind2012], Chappel[-@ChappleHighestBestUse2014], and Lester et al [@LesterMakingRoomManufacturing2013] have explored how dominant urban policy approaches are oriented towards the conversion of industrial lands to non-industrial uses accelerating local labor market restructuring and deindustrialization. Recognizing these gaps, a select number of large US cities have passed new regulations protecting industrial and employment lands. Though cities, and researchers, argue that preserving industrial land will help keep manufacturing and industrial jobs in cities, there is a lack of research on the actual jobs impact of such policies. This is due to a combination of the novelty of these policies (many were passed in the last fifteen years) and the lack of available employment data at fine enough geographies to reasonably estimate employment impact at the intra-city scale. 
+
+This study relies on a novel dataset of existing industrial preservation policies within the US's fifty largest cities and local employment data from the Census's Longitudinal Employment Household Dynamics (LEHD) Origin-Destination Employment statistics dataset.The LEHD allows for the estimation of the effect of industrial land preservation policies on protecting industrial jobs pre and post-Great Recession.
+
+The next section of the study will review the existing literature on industrial land preservation and labor market restructuring, followed by a description of the study's methodology and data, and final discussion section. 
+
+#Literature Review
+
+This section will cover recent work on land-use change and labor market restructuring. First, the predominant land-use policy paradigm in the contemporary us- Smart Growth- is under increased scrutiny for encouraging cities to converty industrial land to non-industrial uses regardless of its current strategic or employment value highlighting a growing contradiction in many cities across the US as they attempt to balance robust population growth with maintaining existing industrial jobs. Second, the question of industrial land, land-use change, local labor market restructuring, and business growth has come back to the fore for economic development researchers. Succinctly, what are the actual labor market and business effects of converting industrial land? Finally, conversion is    
+
+##Blindness and Best Uses
+
+The predominant land-use policy paradigm in the US today is Smart Growth. While, not all major cities necessarily call their plans Smart Growth plans, the general principles of encouraging mixed-use, transit-oriented development and densifying existing urban areas are now common place and owe their popularity largely to the spread of Smart Growth principles. Unfortunately, Smart Growth proponents have generally ignored the value of industrial lands. Leigh and Hoelzel [-@LeighSmartGrowthBlind2012] reviewed the industrial policies of 13 cities and 10 major Smart Growth publications from Smart Growth America, the Environmental Protection Agency, and PAS guides from the American Planning Association. They found that while cities may be concerned with the loss of industrial land and jobs, the dominant land-use guides cities draw generally frame industrial land in a negative light as either obsolete, a fiscal drag, or generally polluted. Leigh and Hoelzel highlight a major contradiction in many cities, especially faster growing cities, where policymakers are aware of the importance industrial land and jobs, and even have policies to support them, yet their land-use policies work directly against them by encouraging the conversion of industrial land to non-industrial uses.
+
+A common reason for the conversion of industrial land to non-industrial uses is that land should be given over to its "highest and best use". Thus an industrial district in a growing part of a city should be converted to non-industrial if developers are willing to outbid existing industrial users for the land. This argument is generally supported on efficiency grounds but it utterly devalues the role that industrial land, and users play, in greater urban and regional economic development and business growth. Chapple [-@ChappleHighestBestUse2014] offers one challenge to this assertion by estimating the role of industrially zoned land in regional business dynamics- the creation, growth, and death of firms. Chapple finds that firm creation, and growth of newer firms, are correlated with the availability of industrially zoned land in four Bay Area cities. The theory underlying these results is that available industrial land not only lowers start up costs for new firms, but also allows firms to expand *in place*. Industrial land will not make ineffective firms viable but industrial land does make already effective firms stronger by offering them flexible space to expand into.
+
+While Chapple (2014) examined the regional business dynamics of industrial land supply, Lester and Hartley [-@Lesterlongtermemployment2014] estimate the effect of local neighborhood gentrification on labor markets. They find that local gentrification has moderate positive overall effects on employment growth but it also responsible for dramatic industrial restructuring in neighborhoods replacing prior industrial jobs with lesser paid service jobs. In their findings, Lester and Hartley link the processes of social, and physical, neighborhood change to localized economic restructuring. Lester and Hartley's work should be seen as an extension of Curran's [-@CurranGentrificationnaturework2004; -@CurranFryingPanOven2007] work examining the local policies and practices that forcibly displace manufacturing firms as part of broader, global patterns in capital accumulation and uneven development. Both sets of studies, though, are unequivocal in stating that industrial employment change, particularly deindustrialization, is not wholly an exogneous phenomenon but one that is intimately tied to *local* policies and priorities. Curran, in particular, examines the interplay of deindustrialization, labor disputes, and city real-estate interests combine to weaken the standing of industrial employers in Brooklyn as well as contribute to an overall narrative of industrial decline. 
+
+##Placing Urban Manufacturing
 
 
 
-##References
+Chapple, Curran, and Lester et al examine different angles of the question of local land-use change and labor market restructuring, but they also speak to a broader conflict in economic development policy- industrial retention versus new firm growth. In actuality, these are less opposite poles than overlapping areas of policy concern and cities often claim they are doing both. 
+
+#Data and Methodology
+
+
+
+#References
