@@ -45,6 +45,8 @@ long as firm factor substitutions are properly specified then the location choic
 
 But while neoclassical industrial location offers reasoning for the continued decentralization of US manufacturing we see that urban manufacturing persists in many places. Byron and Mistry's [-@ByronFederalRoleSupporting2011] Brookings report on urban manufacturing highlights the metropolitan centralization of smaller urban manufacturing firms that benefits from a variety of benefits in urban areas including, but not limited to, proximity to customers and suppliers and the ability to draw on the larger skilled labor markets in metropolitan areas.These smaller firms, more dependent upon existing relations with proximal firms and close working relationships with clients, garner their competitive advantages precisely *because* they are urban. Van Winden at al [-@VanWindenManufacturingnewurban2010] expand on this point in their 2010 volume on urban manufacturing in Europe noting that more advanced manufacturing requiring closer relationships with clients for prototyping and testing reward proximity and encourage agglomeration. 
 
+*Potentially add something on stick places or working regions here* 
+
 
 Chapple, Curran, and Lester et al examine different angles of the question of local land-use change and labor market restructuring, but they also speak to a broader conflict in economic development policy- industrial retention versus new firm growth. In actuality, these are less opposite poles than overlapping areas of policy concern and cities often claim they are doing both. 
 
