@@ -1,6 +1,6 @@
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, car, cobalt, ipw,  dplyr, dbplyr)
+p_load(RPostgreSQL, car, cobalt, ipw,  sf, dplyr, dbplyr)
 
 
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
@@ -15,7 +15,7 @@ con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, passwo
 
 
 
-city_lehd_mfg <- dbGetQuery(con, "select distinct a.blk_grp_id, a.tot_emp, a.ag_emp, a.mining_emp,
+city_lehd_mfg <- st_read_db(conn = con, query = "select distinct a.blk_grp_id, a.tot_emp, a.ag_emp, a.mining_emp,
 a.util_emp, a.mfg_emp, a.wholesale_emp, a.transpo_emp,
 a.place_geoid, a.city_name, b.totpop as totpop, b.white_nh as white_nh, 
 b.black_nh as black_nh, b.hispanic as hispanic, b.mhi as mhi, 
