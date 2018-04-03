@@ -94,14 +94,17 @@ block_place_pop <- place_by_pop %>%
              by = c("GEOID" = "GEOID", "STATEFIPS" = "STATEFIPS"))
 
 block_place_pop <- block_place_pop %>% 
-  mutate(BLKGRP_FIPS = stringr::str_sub(BLOCKID, 1, 12)) 
+  mutate(blk_grp_fips = stringr::str_sub(BLOCKID, 1, 12)) 
 
 block_place_pop <- block_place_pop %>% 
-  select(GEOID, FULLNAME = NAME.x, tot_pop = B01003_001E, STATEFIPS, BLOCKID, PLACEFP, NAMELSAD, BLKGRP_FIPS)
+  select(GEOID, FULLNAME = NAME.x, place_pop2012 = B01003_001E, STATEFIPS, BLOCKID, PLACEFP, NAMELSAD, blk_grp_fips)
 
 block_place_pop <- block_place_pop %>% 
-  group_by(BLKGRP_FIPS, GEOID, PLACEFP, FULLNAME, NAMELSAD) %>% 
+  group_by(blk_grp_fips, GEOID, place_pop2012, PLACEFP, FULLNAME, NAMELSAD) %>% 
   summarise()
+
+block_place_pop <- block_place_pop %>% data.frame() %>% 
+  ungroup() %>% rename_all(funs(tolower))
 
 #replace the block group place table in db: industrial_land------
 
@@ -115,7 +118,9 @@ con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, passwo
 dbSendQuery(conn = con, statement = "DROP TABLE IF EXISTS blkgrp_place_xwalk;")
 
 copy_to(dest = con, block_place_pop, name = "blkgrp_place_xwalk",
-        indexes = list("BLKGRP_FIPS", "GEOID", "NAMELSAD"), overwrite = TRUE,
+        indexes = list("blk_grp_fips", "geoid", "namelsad"), overwrite = TRUE,
         temporary = FALSE)
 
 dbDisconnect(conn = con)
+
+rm(list = ls())
