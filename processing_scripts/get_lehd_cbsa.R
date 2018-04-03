@@ -4,7 +4,7 @@
 #in this case county and CBSA ids
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(tigris,purrr, readr, stringr, sf, dplyr)
+p_load(tigris,purrr, RPostgreSQL,readr, stringr, sf, dplyr, dbplyr)
 options(tigris_class = "sf", tigris_use_cache = TRUE)
 
 devtools::install_github("jamgreen/lehdr")
@@ -55,10 +55,10 @@ big_lehd <- big_lehd %>% mutate(bg_fips = str_sub(w_geocode, 1, 12)) %>%
 
 big_lehd <- big_lehd %>% filter(!is.na(cbsa))
 
-#copy into industrial_land db for joining later
+big_lehd <- big_lehd %>% ungroup() %>% 
+  rename_all(funs("tolower"))
 
-if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, postGIStools, sf,dplyr, dbplyr)
+#copy into industrial_land db for joining later
 
 
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
@@ -69,9 +69,11 @@ dbname <- "industrial_land"
 
 con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
 
-big_lehd <- as.data.frame(big_lehd)
+big_lehd <- data.frame(big_lehd)
 
 DBI::dbWriteTable(conn = con, "lehd_cbsa", big_lehd, overwrite = TRUE)
+
+dbDisconnect(con)
 
 
 rm(list = ls())
