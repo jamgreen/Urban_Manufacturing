@@ -90,7 +90,8 @@ place_by_pop <- place_by_pop %>% arrange(desc(B01003_001E)) %>%
   slice(1:51)
 
 block_place_pop <- place_by_pop %>% 
-  inner_join(block_assign_place, by = c("GEOID" = "GEOID", "STATEFIPS" = "STATEFIPS"))
+  inner_join(block_assign_place, 
+             by = c("GEOID" = "GEOID", "STATEFIPS" = "STATEFIPS"))
 
 block_place_pop <- block_place_pop %>% 
   mutate(BLKGRP_FIPS = stringr::str_sub(BLOCKID, 1, 12)) 
@@ -113,7 +114,8 @@ con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, passwo
 
 dbSendQuery(conn = con, statement = "DROP TABLE IF EXISTS blkgrp_place_xwalk;")
 
-copy_to(dest = con, block_place_pop, "blkgrp_place_xwalk",
-        indexes = list("BLKGRP_FIPS", "GEOID", "NAMELSAD"))
+copy_to(dest = con, block_place_pop, name = "blkgrp_place_xwalk",
+        indexes = list("BLKGRP_FIPS", "GEOID", "NAMELSAD"), overwrite = TRUE,
+        temporary = FALSE)
 
 dbDisconnect(conn = con)
