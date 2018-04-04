@@ -128,12 +128,13 @@ where year = '2009') b ON
 prop_score_mfg_ind.geoid10 = b.bg_fips;
 ")
 
-prop_2015 <- dbGetQuery(con, "DROP TABLE IF EXISTS lehd_model_2009_emp;
-CREATE TABLE lehd_model_2009_emp AS
+prop_2015 <- dbGetQuery(con, "DROP TABLE IF EXISTS lehd_model_2015_emp;
+CREATE TABLE lehd_model_2015_emp AS
 select *
 from prop_score_mfg_ind  LEFT JOIN
-(SELECT bg_fips,'C000' as tot_emp, 'CNS01' as ag2009, 'CNS02' as mining2009, 'CNS03' as util2009, 
-'CNS05' as mfg2009, 'CNS06' as wholesale2009, 'CNS08' as transpo2009
+(SELECT bg_fips,'C000' as tot_emp2015, 'CNS01' as ag2015, 'CNS02' as mining2015, 
+'CNS03' as util2015, 'CNS05' as mfg2015, 'CNS06' as wholesale2015, 
+'CNS08' as transpo2015
 FROM lehd_cbsa
 where year = '2015') b ON
 prop_score_mfg_ind.geoid10 = b.bg_fips;
