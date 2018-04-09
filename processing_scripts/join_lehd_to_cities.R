@@ -104,6 +104,13 @@ dbWriteTable(conn = con, name = "cbd_placefp_xwalk", value = cbd_match_left, row
 # from cbd_placefp_xwalk
 # where cbd_nad83albers.fullname = cbd_placefp_xwalk.fullname;
 
+#add distance from city center
+# alter table lehd_places add column dist_km numeric;
+# update lehd_places
+# set dist_km = ST_Distance(cbd_nad83albers.geom, ST_Centroid(lehd_places.geom))/1000
+# from cbd_nad83albers
+# where lehd_places.place_geoid = cbd_nad83albers.place_geoid;
+
 #add pmd policy to the data table, create proper dummy variable in R
 # alter table lehd_places drop column pmd_policy;
 # alter table lehd_places add column pmd_policy varchar;

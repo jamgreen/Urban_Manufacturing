@@ -16,6 +16,22 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+p_load(RPostgreSQL, ggthemes, here, ggplot2, sf, dplyr, extrafont, hrbrthemes,viridis)
+
+host <- "pgsql.rc.pdx.edu"
+user <- "jamgreen"
+pw <- scan(here("batteries.pgpss"), what = "")
+dbname <- "industrial_land"
+
+
+con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
+
+
+```
+
 #Introduction
 
 The story of US deindustrialization is well known. From the decentralization of industrial plants from union heavy northern areas to the offshoring of production to Asia, the general narrative of US manufacturing employment is one of traumatic decline that devastates communities and is responsible for growing income inequality [@BluestonedeindustrializationAmericaPlant1982].These losses are often attributed to growing productivity, skill biased technical change or labor copetition from lower cost countries [@WeaverSkillDemandsMismatch2016]. But this narrative may overstate possible effects missing alternative explanations such as the role of changing corporate strategy and structure on management decision [@BergerHowFinanceGutted2014]. Urban planners, geographers, and regional economic development shcolars are now highlightling another potential major factor in local deindustrialization-- local and regional land use management, specifically, the loss of land available for industry.
@@ -36,7 +52,7 @@ The predominant land-use policy paradigm in the US today is Smart Growth. While,
 
 A common reason for the conversion of industrial land to non-industrial uses is that land should be given over to its "highest and best use". Thus an industrial district in a growing part of a city should be converted to non-industrial if developers are willing to outbid existing industrial users for the land. This argument is generally supported on efficiency grounds but it utterly devalues the role that industrial land, and users play, in greater urban and regional economic development and business growth. Chapple [-@ChappleHighestBestUse2014] offers one challenge to this assertion by estimating the role of industrially zoned land in regional business dynamics- the creation, growth, and death of firms. Chapple finds that firm creation, and growth of newer firms, are correlated with the availability of industrially zoned land in four Bay Area cities. The theory underlying these results is that available industrial land not only lowers start up costs for new firms, but also allows firms to expand *in place*. Industrial land will not make ineffective firms viable but industrial land does make already effective firms stronger by offering them flexible space to expand into.
 
-While Chapple (2014) examined the regional business dynamics of industrial land supply, Lester and Hartley [-@Lesterlongtermemployment2014] estimate the effect of local neighborhood gentrification on labor markets. They find that local gentrification has moderate positive overall effects on employment growth but it also responsible for dramatic industrial restructuring in neighborhoods replacing prior industrial jobs with lesser paid service jobs. In their findings, Lester and Hartley link the processes of social, and physical, neighborhood change to localized economic restructuring. Lester and Hartley's work should be seen as an extension of Curran's [-@CurranGentrificationnaturework2004; -@CurranFryingPanOven2007] work examining the local policies and practices that forcibly displace manufacturing firms as part of broader, global patterns in capital accumulation and uneven development. Both sets of studies, though, are unequivocal in stating that industrial employment change, particularly deindustrialization, is not wholly an exogneous phenomenon but one that is intimately tied to *local* policies and priorities. Curran, in particular, examines the interplay of deindustrialization, labor disputes, and city real-estate interests combine to weaken the standing of industrial employers in Brooklyn as well as contribute to an overall narrative of industrial decline. 
+While Chapple (2014) examined the regional business dynamics of industrial land supply, Lester and Hartley [-@Lesterlongtermemployment2014] estimated the effect of local neighborhood gentrification on labor markets. They find that local gentrification has moderate positive overall effects on employment growth but it also responsible for dramatic industrial restructuring in neighborhoods replacing prior industrial jobs with lesser paid service jobs. In their findings, Lester and Hartley link the processes of social, and physical, neighborhood change to localized economic restructuring. Lester and Hartley's work should be seen as an extension of Curran's [-@CurranGentrificationnaturework2004; -@CurranFryingPanOven2007] work examining the local policies and practices that forcibly displace manufacturing firms as part of broader, global patterns in capital accumulation and uneven development. Both sets of studies, though, are unequivocal in stating that industrial employment change, particularly deindustrialization, is not wholly an exogneous phenomenon but one that is intimately tied to *local* policies and priorities. Curran, in particular, examines the interplay of deindustrialization, labor disputes, and city real-estate interests combine to weaken the standing of industrial employers in Brooklyn as well as contribute to an overall narrative of industrial decline. 
 
 ##Placing Urban Manufacturing
 
@@ -56,13 +72,88 @@ Chapple, Curran, and Lester et al examine different angles of the question of lo
 
 The primary data source for this study is the Workplace Area Characteristic (WAC)  file Longitudinal Origin-Destination Employment Series (LODES) dataset from the Longitudinal Household Employment Dynamics (LEHD) dataset from the US Census Bureau[^1]. The LODES dataset combines administrative employment data from state unemployment insurance filings with Census population information to offer a geographically fine (census block level) measure of employment for major industrial categories. In addition to its geographic specificity, most states in the country have LODES data going back to 2002 allowing for a truly longitudinal study of the changes in the geography of jobs. 
 
-For this study, I collected LODES WAC data for the years 2004, 2005, and 2009 for 47 of the US's 50 largest cities aggregated to the block group level. LODES data is prepared alreayd normalized to 2010 census geographies allowing for valid comparisons across time and the ability to easily join the data to other census sources. From the three years of data I collected LODES estimates of total, agricultural, mining, utilities, manufacturing, wholesale trade, and transportation employment for all primary jobs (LEHD job type code "JT01").
+For this study, I collected LODES WAC data for the years 2009 and 2015 for 48 of the US's 50 largest cities aggregated to the block group level (34,739 and 34,929 block groups total, respectively). There are 48 cities due to data incompleteness for some states in the LODES dataset (Washington DC, Massachusetts). LODES data is prepared normalized to 2010 census geographies allowing for valid comparisons across time and the ability to easily join the data to other census sources. From the three years of data I collected LODES estimates of total, agricultural, mining, utilities, manufacturing, wholesale trade, and transportation employment for all primary jobs (LEHD job type code "JT01").
 
 Block group population data was collected from the 2005-2009 American Community Survey from NHGIS [@StevenMansonIPUMSNationalHistorical2017]. The ACS information collected included estimates of total, Non-Hispanic White, Non-Hispanic Black, and Hispanic residents. Additionally, I collected the total number of housing units and the total number of owner and renter occupied units. Finally, I calculated total population density (km^2).
 
 Street network density data was collected from the Environmental Protection Agenciy's Smart Location Database (SLD) [@EnvironmentalProtectionAgencyEPASmartLocation2013]. The SLD is the most comprehensive national level database of the urban built environment publicly available collected at the block group level. 
 
-Finally, I include dummy variables for whether a block group intersects with what I call a PMD (named after Chicago's Plannined Manufacturing Districts) policy. 
+Finally, I include dummy variables for whether a block group intersects with what I call a PMD (named after Chicago's Plannined Manufacturing Districts) policy. PMD shapefiles were collected from individual city websites, given upon request by the city, or, in the case of New York City, manually created from the affected parcels.
+
+##The Large City Geography of Production
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+city_lehd <- tbl(con, "lehd_places")
+city_lehd <- city_lehd %>% filter(fullname != "Bakersfield city, California")
+city_lehd <- collect(city_lehd)
+
+city_lehd_mfg <- city_lehd %>% select(1:5, cns05, 28, 30)
+
+mfg_2004 <- city_lehd %>% filter(year == "2004") %>% 
+  group_by(namelsad) %>% summarize(mfg_emp2004 = sum(cns05))
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  group_by(namelsad, placefp, year) %>% 
+  summarise_if(is.numeric, sum)
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  left_join(mfg_2004, by = "namelsad" ) %>% 
+  distinct()
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(mfg_2004_idx = (cns05/mfg_emp2004)*100)
+
+city_lehd_mfg <- city_lehd_mfg %>% ungroup() %>% 
+  mutate(mfg_share = cns05/c000)
+
+outlier_cities <- city_lehd_mfg %>% 
+  filter(year == "2015") %>% 
+  mutate(MfgIndexZ = scale(mfg_2004_idx)) %>% 
+  select(namelsad, MfgIndexZ) 
+
+city_lehd_mfg <- left_join(city_lehd_mfg, outlier_cities, 
+                           by = "namelsad")
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+mutate(Outlier  = case_when(MfgIndexZ < -1 ~ "Low",
+                            MfgIndexZ > 1 ~ "High",
+                            TRUE ~ "Average"))
+
+city_lehd_mfg$Outlier <- as.factor(city_lehd_mfg$Outlier)
+levels(city_lehd_mfg$Outlier) <- c("Low", "Average", "High")
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(Policy = ifelse(namelsad %in% c("Los Angeles city", "Chicago city", "San Diego city", "Jacksonville city", "San Francisco city", "Seattle city", "Baltimore city", "Portland city", "San Jose city", "Minneapolis city", "New York city"), 1, 0))
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(city_name = gsub("city", " ", city_lehd_mfg$namelsad))
+```
+
+While manufacturing is often the poster child for urban industrial employment and development, the availability of industrial land serves mulitple kinds of industrial users allowing analysts to measure the geography of production in multiple ways. For this study, I tracked both manufacturing employment (CNS05 in the LEHD corresponding to the NAICS industry sectors 31-33) and a broader "industrial" employment category that is the sum of agricultural, mining, utilities, manufactucturing, wholesale trade, and transportation and warehousing eployment. 
+
+###Urban Manufacturing Is Not Dead, But In Some Cities It Is Dying
+
+From 2004-2015 for the 48 largest cities where data is available manufacturing still has a legitimate presence in city labor markets in both absolute and relative terms but the state of manufacturing across cities is decidedly mixed. Figure 1 shows the broad pattern of the change in manufacturing employment over time in the nation's largest cities. Most cities, unfortunately, have lost manufacturing employment compared to their 2004 employment, corresponding to a more general belief that manufacturing is losing in the country and that cities, especially, are inhospitable places. But there are some notable exceptions. The cities highlighted in red all had positive manufacturing employment growth compared to the blue cities that suffered catstrophic manufacturing job losses.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+mfg_index_plot <- ggplot(city_lehd_mfg, aes(year, mfg_2004_idx, group = city_name, color = Outlier)) + 
+  geom_line() +  
+  scale_color_manual(values = c("#DCDCDC", "#FF0000", "#0000FF")) +
+  theme_minimal() +
+  labs(title = "Change in Mfg Employment for 48 Large Cities, 2004-2015",
+       subtitle = "Mfg. Employment Indexed to 2004 measures",
+       x = "Year", y = "Mfg. Employment Index") +
+  theme(legend.position = "none", panel.grid = element_blank())
+
+mfg_index_plot
+```
+
+Cities with the most dramatic manufacturing growth are also those cities with the greatest employment growth showing a pro-cyclical employment effect for manufacturing, but the *share* of manufacturing in these fastest growing cities is generally *falling*. 
+
+
+
 
 [^1]: Further technical details on the LODES dataset can be found here: [https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf)
 
