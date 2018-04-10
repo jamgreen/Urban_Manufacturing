@@ -134,25 +134,17 @@ While manufacturing is often the poster child for urban industrial employment an
 
 ###Urban Manufacturing Is Not Dead, But In Some Cities It Is Dying
 
-From 2004-2015 for the 48 largest cities where data is available manufacturing still has a legitimate presence in city labor markets in both absolute and relative terms but the state of manufacturing across cities is decidedly mixed. Figure 1 shows the broad pattern of the change in manufacturing employment over time in the nation's largest cities. Most cities, unfortunately, have lost manufacturing employment compared to their 2004 employment, corresponding to a more general belief that manufacturing is losing in the country and that cities, especially, are inhospitable places. But there are some notable exceptions. The cities highlighted in red all had positive manufacturing employment growth compared to the blue cities that suffered catstrophic manufacturing job losses.
+From 2004-2015 for the 48 largest cities where data is available manufacturing still has a legitimate presence in city labor markets in both absolute and relative terms but the state of manufacturing across cities is decidedly mixed. Figure 1 shows the broad pattern of the change in manufacturing employment over time in the nation's largest cities. Most cities, unfortunately, have lost manufacturing employment compared to their 2004 employment, corresponding to a more general belief that manufacturing is losing in the country and that cities, especially, are inhospitable places. But there are some notable exceptions. Of particular note are Texan energy cities like Houston and Arlington that have had tremendous growth compared to their 2004 baselines. On the other end, manufacturing employment loss does not seem to have any particular major patterns with growing, bustling cities like Seattle losing more of their employment compared to its 2004 baseline than suffering cities like Baltimore and Detroit. 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-
-mfg_index_plot <- ggplot(city_lehd_mfg, aes(year, mfg_2004_idx, group = city_name, color = Outlier)) + 
-  geom_line() +  
-  scale_color_manual(values = c("#DCDCDC", "#FF0000", "#0000FF")) +
-  theme_minimal() +
-  labs(title = "Change in Mfg Employment for 48 Large Cities, 2004-2015",
-       subtitle = "Mfg. Employment Indexed to 2004 measures",
-       x = "Year", y = "Mfg. Employment Index") +
-  theme(legend.position = "none", panel.grid = element_blank())
-
-mfg_index_plot
-```
+![Figure 1](images/mfg_index_line_facet.png)
 
 Cities with the most dramatic manufacturing growth are also those cities with the greatest employment growth showing a pro-cyclical employment effect for manufacturing, but the *share* of manufacturing in these fastest growing cities is generally *falling*. 
 
+Beyond the growth rates, the absolute number of manufacturing jobs across the largest cities in the country is higher than most would assume. In 2015, there were approximately 1,632,914 primary jobs in manufacturing in the nation's 48 largest cities. Of these 48 cities, 41 had more at least 10,000 primary manufacturing jobs, and 34 had at least 25,000 primary manufacturing jobs. While these numbers challenge the conventional wisdom of American large cities as devoid of manufacturing these jobs are still a modest share of *all* jobs in most cities. The average share of manufacturing jobs in these cities in 2015 is only 6.5%, with a median value of 5.7%. There are eight cities- Arlington, Detroit, Fort Worth, Louisville, Milwaukee, San Jose, Tulsa, and Wichita- where manufacturing jobs make up at least 10% of all jobs showing the regional diversity in production throughout the country.   
 
+![Figure 2: Most Large US Cities had at least 25,000 manufacturing jobs](images/mfg_tot_emp_2015_lollipop.png)
+
+![Figure 3:Wichita and San Jose lead large cities in the percentage share of jobs in manufacturing](images/mfg_share_2015_lollipop.png)
 
 
 [^1]: Further technical details on the LODES dataset can be found here: [https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf)

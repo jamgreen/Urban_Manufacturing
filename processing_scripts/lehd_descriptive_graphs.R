@@ -1,0 +1,152 @@
+#making some of the visualizations for the methodology and data section of the modeling chapter
+
+if(!require(pacman)){install.packages("pacman"); library(pacman)}
+p_load(RPostgreSQL, ggthemes, ggalt, here, ggplot2, sf, dplyr, extrafont, hrbrthemes,viridis)
+
+host <- "pgsql.rc.pdx.edu"
+user <- "jamgreen"
+pw <- scan(here("batteries.pgpss"), what = "")
+dbname <- "industrial_land"
+
+
+con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
+
+city_lehd <- tbl(con, "lehd_places")
+city_lehd <- city_lehd %>% filter(fullname != "Bakersfield city, California")
+city_lehd <- collect(city_lehd)
+
+
+#split out the manufacturing emp from lehd_places------
+
+city_lehd_mfg <- city_lehd %>% select(1:5, cns05, 28, 30)
+
+mfg_2004 <- city_lehd %>% filter(year == "2004") %>% 
+  group_by(namelsad) %>% summarize(mfg_emp2004 = sum(cns05))
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  group_by(namelsad, placefp, year) %>% 
+  summarise_if(is.numeric, sum)
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  left_join(mfg_2004, by = "namelsad" ) %>% 
+  distinct()
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(mfg_2004_idx = (cns05/mfg_emp2004)*100)
+
+city_lehd_mfg <- city_lehd_mfg %>% ungroup() %>% 
+  mutate(mfg_share = cns05/c000)
+
+#calculating change in manufacturing employment indexed to 2004 employment------
+outlier_cities <- city_lehd_mfg %>% 
+  filter(year == "2015") %>% 
+  mutate(MfgIndexZ = scale(mfg_2004_idx)) %>% 
+  select(namelsad, MfgIndexZ) 
+
+city_lehd_mfg <- left_join(city_lehd_mfg, outlier_cities, 
+                           by = "namelsad")
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(Outlier  = case_when(MfgIndexZ < -1 ~ "Low",
+                              MfgIndexZ > 1 ~ "High",
+                              TRUE ~ "Average"))
+
+city_lehd_mfg$Outlier <- as.factor(city_lehd_mfg$Outlier)
+levels(city_lehd_mfg$Outlier) <- c("Low", "Average", "High")
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(Policy = ifelse(namelsad %in% c("Los Angeles city", "Chicago city", "San Diego city", "Jacksonville city", "San Francisco city", "Seattle city", "Baltimore city", "Portland city", "San Jose city", "Minneapolis city", "New York city"), 1, 0))
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(city_name = gsub("city", "", city_lehd_mfg$namelsad))
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(city_name_short = case_when(city_name == "Indianapolis  (balance)" ~ "Indianapolis",
+                                     city_name == "Louisville/Jefferson County metro government (balance)" ~ "Louisville",
+                                     city_name == "Nashville-Davidson metropolitan government (balance)" ~ "Nashville",
+                                     TRUE ~ city_name))
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(mfg_emp_thousands = cns05/1000)
+
+#create ordering variable of percent change between 2004 and 2015-----
+mfg_2004_2015_emp <- city_lehd_mfg %>% filter(year == "2004" | year == "2015") %>% 
+  select(city_name, city_name_short, year, mfg_emp_thousands) %>% 
+  tidyr::spread(key = year, value = mfg_emp_thousands, sep = "_")
+
+mfg_2004_2015_emp <- mfg_2004_2015_emp %>% 
+  mutate(mfg_emp_change = (year_2015 - year_2004)/year_2015)
+
+mfg_2004_2015_emp <- mfg_2004_2015_emp %>% 
+  select(city_name_short, mfg_emp_change)
+  
+city_lehd_mfg <- city_lehd_mfg %>% 
+  left_join(mfg_2004_2015_emp, by = c("city_name_short" = "city_name_short"))
+
+city_lehd_mfg <- city_lehd_mfg %>% 
+  mutate(emp_trend = case_when(mfg_emp_change < 0 ~ "Decreasing Trend",
+                               mfg_emp_change >= 0 ~ "Increasing Trend"))
+
+#the mfg employment index spaghetti graph with red and blue outliers
+
+mfg_index_plot <- ggplot(city_lehd_mfg, aes(year, mfg_2004_idx, group = city_name, color = Outlier)) + 
+  geom_line() +  
+  scale_color_manual(values = c("#DCDCDC", "#FF0000", "#0000FF")) +
+  theme_minimal() +
+  labs(title = "Change in Mfg Employment for 48 Large Cities, 2004-2015",
+       subtitle = "Mfg. Employment Indexed to 2004 measures",
+       x = "Year", y = "Mfg. Employment Index", caption = "Source: LEHD WAC Files 2004-2015") +
+  theme(legend.position = "none", panel.grid = element_blank())
+
+
+
+mfg_index_facet <- ggplot(city_lehd_mfg, aes(year, mfg_2004_idx, group = city_name_short)) +
+  geom_line(color = "blue3") + theme_minimal() +
+  labs(title = "Change in Mfg Employment for 48 Large Cities, 2004-2015",
+       subtitle = "Mfg. Employment Indexed to 2004 measures",
+       x = "Year", y = "Mfg. Employment Index", caption = "Source: LEHD WAC Files 2004-2015",
+       axis.text.y = 5) +
+  theme(legend.position = "none", panel.grid = element_blank()) +
+  geom_hline(yintercept = 100, color = "red3", linetype = "dotted") +
+  scale_x_discrete(limits = c("2004", "2007", "2010", "2015"))+
+  facet_wrap(~ city_name_short, ncol = 6) 
+
+#area graphs of change in absolute mfg employment and mfg employment share over time
+
+mfg_tot_emp_line <- ggplot(city_lehd_mfg, aes(year, mfg_emp_thousands, group = city_name_short, 
+                                              colour = emp_trend)) +
+  geom_line() + theme_minimal() + 
+  theme(legend.position = "none", 
+        panel.grid = element_blank(),
+        axis.text.x = element_text(size = 5),
+        axis.text.y = element_text(size = 6)) +
+  labs(title = "Total Mfg. Employment for 48 Large Cities, 2004-2015",
+       x = "Year", y = "Manufacturing Employment (thousands)", 
+       caption = "Source: LEHD WAC Files 2004-2015") +
+  facet_wrap(~ forcats::fct_reorder(city_name_short, mfg_emp_change), ncol = 6, scales = "free") +
+  scale_x_discrete(limits = c("2004", "2007", "2010", "2015")) +
+  scale_y_continuous(labels = scales::comma)
+
+mfg_2015 <- city_lehd_mfg %>% filter(year == "2015")
+
+mfg_tot_mfg_emp_lolli <- ggplot(mfg_2015, 
+                            aes(x = forcats::fct_reorder(city_name_short, mfg_emp_thousands), 
+                                y = mfg_emp_thousands)) +
+  geom_lollipop(point.colour = "blue3") + theme_minimal() +
+  labs(title = "Total Manufacturing Employment, 2015",
+        x = "City", y = "Total Employment (thousands)",
+        caption = "Source: LEHD WAC Files 2015") +
+        scale_y_continuous(labels = scales::comma) +
+  theme(panel.grid.minor = element_blank()) +
+  coord_flip()
+
+mfg_share_emp_lolli <- ggplot(mfg_2015, 
+                              aes(x = forcats::fct_reorder(city_name_short, mfg_share), 
+                                  y = mfg_share)) +
+  geom_lollipop(point.colour = "blue3") + theme_minimal() +
+  labs(title = "Large City Manufacturing Employment Share, 2015",
+       x = "City", y = "Employment Share (%)",
+       caption = "Source: LEHD WAC Files 2015") +
+  scale_y_continuous(labels = scales::percent) +
+  theme(panel.grid.minor = element_blank()) +
+  coord_flip()
