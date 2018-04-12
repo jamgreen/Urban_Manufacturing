@@ -2,14 +2,14 @@
 title: 'Keeping Space for Jobs: Evaluating Industrial Land Protection Policies'
 author: "Jamaal Green"
 date: "3/13/2018"
-output: 
+output:
+  word_document: default
   pdf_document:
-    number_sections: TRUE
+    number_sections: yes
 header-includes:
-  - \usepackage{pdflscape}
-  - \newcommand{\blandscape}{\begin{landscape}}
-  - \newcommand{\elandscape}{\end{landscape}}
-    
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
 bibliography: tmp-clean-file.bib
 ---
 
