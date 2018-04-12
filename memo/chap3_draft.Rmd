@@ -5,6 +5,11 @@ date: "3/13/2018"
 output: 
   pdf_document:
     number_sections: TRUE
+header-includes:
+  - \usepackage{pdflscape}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
+    
 bibliography: tmp-clean-file.bib
 ---
 
@@ -34,17 +39,17 @@ con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, passwo
 
 #Introduction
 
-The story of US deindustrialization is well known. From the decentralization of industrial plants from union heavy northern areas to the offshoring of production to Asia, the general narrative of US manufacturing employment is one of traumatic decline that devastates communities and is responsible for growing income inequality [@BluestonedeindustrializationAmericaPlant1982].These losses are often attributed to growing productivity, skill biased technical change or labor copetition from lower cost countries [@WeaverSkillDemandsMismatch2016]. But this narrative may overstate possible effects missing alternative explanations such as the role of changing corporate strategy and structure on management decision [@BergerHowFinanceGutted2014]. Urban planners, geographers, and regional economic development shcolars are now highlightling another potential major factor in local deindustrialization-- local and regional land use management, specifically, the loss of land available for industry.
+The story of US deindustrialization is well known. From the decentralization of industrial plants from union heavy northern areas to the offshoring of production to Asia, the general narrative of US manufacturing employment is one of traumatic decline that devastates communities and is responsible for growing income inequality [@BluestonedeindustrializationAmericaPlant1982].These losses are often attributed to growing productivity, skill biased technical change or labor competition from lower cost countries [@WeaverSkillDemandsMismatch2016]. But this narrative may overstate possible effects missing alternative explanations such as the role of changing corporate strategy and structure on management decision [@BergerHowFinanceGutted2014]. Urban planners, geographers, and regional economic development scholars are now highlighting another potential major factor in local deindustrialization-- local and regional land use management, specifically, the loss of land available for industry.
 
 Recent research has tracked the dramatic loss of industrially zoned land in growing, large US cities. Recent analyses from Leigh and Hoelzel [-@LeighSmartGrowthBlind2012], Chappel[-@ChappleHighestBestUse2014], and Lester et al [@LesterMakingRoomManufacturing2013] have explored how dominant urban policy approaches are oriented towards the conversion of industrial lands to non-industrial uses accelerating local labor market restructuring and deindustrialization. Recognizing these gaps, a select number of large US cities have passed new regulations protecting industrial and employment lands. Though cities, and researchers, argue that preserving industrial land will help keep manufacturing and industrial jobs in cities, there is a lack of research on the actual jobs impact of such policies. This is due to a combination of the novelty of these policies (many were passed in the last fifteen years) and the lack of available employment data at fine enough geographies to reasonably estimate employment impact at the intra-city scale. 
 
-This study relies on a novel dataset of existing industrial preservation policies within the US's fifty largest cities and local employment data from the Census's Longitudinal Employment Household Dynamics (LEHD) Origin-Destination Employment statistics dataset.The LEHD allows for the estimation of the effect of industrial land preservation policies on protecting industrial jobs pre and post-Great Recession.
+This study relies on a novel data set of existing industrial preservation policies within the US's fifty largest cities and local employment data from the Census's Longitudinal Employment Household Dynamics (LEHD) Origin-Destination Employment statistics data set.The LEHD allows for the estimation of the effect of industrial land preservation policies on protecting industrial jobs pre and post-Great Recession.
 
 The next section of the study will review the existing literature on industrial land preservation and labor market restructuring, followed by a description of the study's methodology and data, and final discussion section. 
 
 #Literature Review
 
-This section will cover recent work on land-use change and labor market restructuring. First, the predominant land-use policy paradigm in the contemporary us- Smart Growth- is under increased scrutiny for encouraging cities to converty industrial land to non-industrial uses regardless of its current strategic or employment value highlighting a growing contradiction in many cities across the US as they attempt to balance robust population growth with maintaining existing industrial jobs. Second, the question of industrial land, land-use change, local labor market restructuring, and business growth has come back to the fore for economic development researchers. Succinctly, what are the actual labor market and business effects of converting industrial land? Finally, conversion is    
+This section will cover recent work on land-use change and labor market restructuring. First, the predominant land-use policy paradigm in the contemporary us- Smart Growth- is under increased scrutiny for encouraging cities to convert industrial land to non-industrial uses regardless of its current strategic or employment value highlighting a growing contradiction in many cities across the US as they attempt to balance robust population growth with maintaining existing industrial jobs. Second, the question of industrial land, land-use change, local labor market restructuring, and business growth has come back to the fore for economic development researchers. Succinctly, what are the actual labor market and business effects of converting industrial land? Finally, conversion is    
 
 ##Blindness and Best Uses
 
@@ -52,11 +57,11 @@ The predominant land-use policy paradigm in the US today is Smart Growth. While,
 
 A common reason for the conversion of industrial land to non-industrial uses is that land should be given over to its "highest and best use". Thus an industrial district in a growing part of a city should be converted to non-industrial if developers are willing to outbid existing industrial users for the land. This argument is generally supported on efficiency grounds but it utterly devalues the role that industrial land, and users play, in greater urban and regional economic development and business growth. Chapple [-@ChappleHighestBestUse2014] offers one challenge to this assertion by estimating the role of industrially zoned land in regional business dynamics- the creation, growth, and death of firms. Chapple finds that firm creation, and growth of newer firms, are correlated with the availability of industrially zoned land in four Bay Area cities. The theory underlying these results is that available industrial land not only lowers start up costs for new firms, but also allows firms to expand *in place*. Industrial land will not make ineffective firms viable but industrial land does make already effective firms stronger by offering them flexible space to expand into.
 
-While Chapple (2014) examined the regional business dynamics of industrial land supply, Lester and Hartley [-@Lesterlongtermemployment2014] estimated the effect of local neighborhood gentrification on labor markets. They find that local gentrification has moderate positive overall effects on employment growth but it also responsible for dramatic industrial restructuring in neighborhoods replacing prior industrial jobs with lesser paid service jobs. In their findings, Lester and Hartley link the processes of social, and physical, neighborhood change to localized economic restructuring. Lester and Hartley's work should be seen as an extension of Curran's [-@CurranGentrificationnaturework2004; -@CurranFryingPanOven2007] work examining the local policies and practices that forcibly displace manufacturing firms as part of broader, global patterns in capital accumulation and uneven development. Both sets of studies, though, are unequivocal in stating that industrial employment change, particularly deindustrialization, is not wholly an exogneous phenomenon but one that is intimately tied to *local* policies and priorities. Curran, in particular, examines the interplay of deindustrialization, labor disputes, and city real-estate interests combine to weaken the standing of industrial employers in Brooklyn as well as contribute to an overall narrative of industrial decline. 
+While Chapple (2014) examined the regional business dynamics of industrial land supply, Lester and Hartley [-@Lesterlongtermemployment2014] estimated the effect of local neighborhood gentrification on labor markets. They find that local gentrification has moderate positive overall effects on employment growth but it also responsible for dramatic industrial restructuring in neighborhoods replacing prior industrial jobs with lesser paid service jobs. In their findings, Lester and Hartley link the processes of social, and physical, neighborhood change to localized economic restructuring. Lester and Hartley's work should be seen as an extension of Curran's [-@CurranGentrificationnaturework2004; -@CurranFryingPanOven2007] work examining the local policies and practices that forcibly displace manufacturing firms as part of broader, global patterns in capital accumulation and uneven development. Both sets of studies, though, are unequivocal in stating that industrial employment change, particularly deindustrialization, is not wholly an exogenous phenomenon but one that is intimately tied to *local* policies and priorities. Curran, in particular, examines the interplay of deindustrialization, labor disputes, and city real-estate interests combine to weaken the standing of industrial employers in Brooklyn as well as contribute to an overall narrative of industrial decline. 
 
 ##Placing Urban Manufacturing
 
-The industrial location literature is voluminous, arguably forming the foundation of much of urban economics, economic geography, and urban studies/planning theory and history. McCann et al [-@MccannRiseFallRise2003] give a thorough review of industrial location theory tracing the history of the production-optimization problems that undergird classical industrial location theory, a la Weber and Von Thunen, to the spatial transaction costs models of neoclassical theorists such as Alonso and, later, Glaeser. production optimization problem, meaning that as
+The industrial location literature is voluminous, arguably forming the foundation of much of urban economics, economic geography, and urban studies/planning theory and history. McCann et al [-@MccannRiseFallRise2003] give a thorough review of industrial location theory tracing the history of the production-optimization problems that under gird classical industrial location theory, a la Weber and Von Thunen, to the spatial transaction costs models of neoclassical theorists such as Alonso and, later, Glaeser. production optimization problem, meaning that as
 long as firm factor substitutions are properly specified then the location choice of firms is solvable. In other words, firms will locate in areas that allow them to find an equilibrium position between a firm’s production function and its external spatial transaction costs (in this case, commonly assumed to be transportation costs). Glaeser et al [-@GlaeserCitiesregionsdecline2003] offer support for these assumptions by noting the decentralization of manufacturing firms and workers in the face of decreasing transportation costs throughout the 20th century US.
 
 But while neoclassical industrial location offers reasoning for the continued decentralization of US manufacturing we see that urban manufacturing persists in many places. Byron and Mistry's [-@ByronFederalRoleSupporting2011] Brookings report on urban manufacturing highlights the metropolitan centralization of smaller urban manufacturing firms that benefits from a variety of benefits in urban areas including, but not limited to, proximity to customers and suppliers and the ability to draw on the larger skilled labor markets in metropolitan areas.These smaller firms, more dependent upon existing relations with proximal firms and close working relationships with clients, garner their competitive advantages precisely *because* they are urban. Van Winden at al [-@VanWindenManufacturingnewurban2010] expand on this point in their 2010 volume on urban manufacturing in Europe noting that more advanced manufacturing requiring closer relationships with clients for prototyping and testing reward proximity and encourage agglomeration. In short, aspects of contemporary manufacturing and industrial work have distinct urban biases. The massive single story production facilities for automobiles may never return to American cities, but they do not have to in the face of other manufacturing industries in food processing, semiconductors or autonomous vehicle prototyping and testing. 
@@ -70,15 +75,15 @@ Chapple, Curran, and Lester et al examine different angles of the question of lo
 
 ##Data
 
-The primary data source for this study is the Workplace Area Characteristic (WAC)  file Longitudinal Origin-Destination Employment Series (LODES) dataset from the Longitudinal Household Employment Dynamics (LEHD) dataset from the US Census Bureau[^1]. The LODES dataset combines administrative employment data from state unemployment insurance filings with Census population information to offer a geographically fine (census block level) measure of employment for major industrial categories. In addition to its geographic specificity, most states in the country have LODES data going back to 2002 allowing for a truly longitudinal study of the changes in the geography of jobs. 
+The primary data source for this study is the Workplace Area Characteristic (WAC)  file Longitudinal Origin-Destination Employment Series (LODES) data set from the Longitudinal Household Employment Dynamics (LEHD) data set from the US Census Bureau[^1]. The LODES data set combines administrative employment data from state unemployment insurance filings with Census population information to offer a geographically fine (census block level) measure of employment for major industrial categories. In addition to its geographic specificity, most states in the country have LODES data going back to 2002 allowing for a truly longitudinal study of the changes in the geography of jobs. 
 
-For this study, I collected LODES WAC data for the years 2009 and 2015 for 48 of the US's 50 largest cities aggregated to the block group level (34,739 and 34,929 block groups total, respectively). There are 48 cities due to data incompleteness for some states in the LODES dataset (Washington DC, Massachusetts). LODES data is prepared normalized to 2010 census geographies allowing for valid comparisons across time and the ability to easily join the data to other census sources. From the three years of data I collected LODES estimates of total, agricultural, mining, utilities, manufacturing, wholesale trade, and transportation employment for all primary jobs (LEHD job type code "JT01").
+For this study, I collected LODES WAC data for the years 2009 and 2015 for 48 of the US's 50 largest cities aggregated to the block group level (34,739 and 34,929 block groups total, respectively). There are 48 cities due to data incompleteness for some states in the LODES data set (Washington DC, Massachusetts). LODES data is prepared normalized to 2010 census geographies allowing for valid comparisons across time and the ability to easily join the data to other census sources. From the three years of data I collected LODES estimates of total, agricultural, mining, utilities, manufacturing, wholesale trade, and transportation employment for all primary jobs (LEHD job type code "JT01").
 
 Block group population data was collected from the 2005-2009 American Community Survey from NHGIS [@StevenMansonIPUMSNationalHistorical2017]. The ACS information collected included estimates of total, Non-Hispanic White, Non-Hispanic Black, and Hispanic residents. Additionally, I collected the total number of housing units and the total number of owner and renter occupied units. Finally, I calculated total population density (km^2).
 
-Street network density data was collected from the Environmental Protection Agenciy's Smart Location Database (SLD) [@EnvironmentalProtectionAgencyEPASmartLocation2013]. The SLD is the most comprehensive national level database of the urban built environment publicly available collected at the block group level. 
+Street network density data was collected from the Environmental Protection Agency's Smart Location Database (SLD) [@EnvironmentalProtectionAgencyEPASmartLocation2013]. The SLD is the most comprehensive national level database of the urban built environment publicly available collected at the block group level. 
 
-Finally, I include dummy variables for whether a block group intersects with what I call a PMD (named after Chicago's Plannined Manufacturing Districts) policy. PMD shapefiles were collected from individual city websites, given upon request by the city, or, in the case of New York City, manually created from the affected parcels.
+Finally, I include dummy variables for whether a block group intersects with what I call a PMD (named after Chicago's Planned Manufacturing Districts) policy. PMD shapefiles were collected from individual city websites, given upon request by the city, or, in the case of New York City, manually created from the affected parcels.
 
 ##The Large City Geography of Production
 
@@ -130,25 +135,74 @@ city_lehd_mfg <- city_lehd_mfg %>%
   mutate(city_name = gsub("city", " ", city_lehd_mfg$namelsad))
 ```
 
-While manufacturing is often the poster child for urban industrial employment and development, the availability of industrial land serves mulitple kinds of industrial users allowing analysts to measure the geography of production in multiple ways. For this study, I tracked both manufacturing employment (CNS05 in the LEHD corresponding to the NAICS industry sectors 31-33) and a broader "industrial" employment category that is the sum of agricultural, mining, utilities, manufactucturing, wholesale trade, and transportation and warehousing eployment. 
+While manufacturing is often the poster child for urban industrial employment and development, the availability of industrial land serves multiple kinds of industrial users allowing analysts to measure the geography of production in multiple ways. For this study, I tracked both manufacturing employment (CNS05 in the LEHD corresponding to the NAICS industry sectors 31-33) and a broader "industrial" employment category that is the sum of agricultural, mining, utilities, manufacturing, wholesale trade, and transportation and warehousing employment. 
 
 ###Urban Manufacturing Is Not Dead, But In Some Cities It Is Dying
 
 From 2004-2015 for the 48 largest cities where data is available manufacturing still has a legitimate presence in city labor markets in both absolute and relative terms but the state of manufacturing across cities is decidedly mixed. Figure 1 shows the broad pattern of the change in manufacturing employment over time in the nation's largest cities. Most cities, unfortunately, have lost manufacturing employment compared to their 2004 employment, corresponding to a more general belief that manufacturing is losing in the country and that cities, especially, are inhospitable places. But there are some notable exceptions. Of particular note are Texan energy cities like Houston and Arlington that have had tremendous growth compared to their 2004 baselines. On the other end, manufacturing employment loss does not seem to have any particular major patterns with growing, bustling cities like Seattle losing more of their employment compared to its 2004 baseline than suffering cities like Baltimore and Detroit. 
 
-![Figure 1](images/mfg_index_line_facet.png)
-
 Cities with the most dramatic manufacturing growth are also those cities with the greatest employment growth showing a pro-cyclical employment effect for manufacturing, but the *share* of manufacturing in these fastest growing cities is generally *falling*. 
 
-Beyond the growth rates, the absolute number of manufacturing jobs across the largest cities in the country is higher than most would assume. In 2015, there were approximately 1,632,914 primary jobs in manufacturing in the nation's 48 largest cities. Of these 48 cities, 41 had more at least 10,000 primary manufacturing jobs, and 34 had at least 25,000 primary manufacturing jobs. While these numbers challenge the conventional wisdom of American large cities as devoid of manufacturing these jobs are still a modest share of *all* jobs in most cities. The average share of manufacturing jobs in these cities in 2015 is only 6.5%, with a median value of 5.7%. There are eight cities- Arlington, Detroit, Fort Worth, Louisville, Milwaukee, San Jose, Tulsa, and Wichita- where manufacturing jobs make up at least 10% of all jobs showing the regional diversity in production throughout the country.   
+Beyond the growth rates, the absolute number of manufacturing jobs across the largest cities in the country is higher than most would assume. In 2015, there were approximately 1,632,914 primary jobs in manufacturing in the nation's 48 largest cities. Of these 48 cities, 41 had more at least 10,000 primary manufacturing jobs, and 34 had at least 25,000 primary manufacturing jobs. While these numbers challenge the conventional wisdom of American large cities as devoid of manufacturing these jobs are still a modest share of *all* jobs in most cities. The average share of manufacturing jobs in these cities in 2015 is only 6.5%, with a median value of 5.7%. There are eight cities- Arlington, Detroit, Fort Worth, Louisville, Milwaukee, San Jose, Tulsa, and Wichita- where manufacturing jobs make up at least 10% of all jobs showing the regional diversity in production throughout the country. 
 
-![Figure 2: Most Large US Cities had at least 25,000 manufacturing jobs](images/mfg_tot_emp_2015_lollipop.png)
+\newpage
+\blandscape
 
-![Figure 3:Wichita and San Jose lead large cities in the percentage share of jobs in manufacturing](images/mfg_share_2015_lollipop.png)
+![Change in manufacturing employment for the nation's largest cities](images/mfg_index_line_facet.png)
+
+\elandscape
 
 
-[^1]: Further technical details on the LODES dataset can be found here: [https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf)
+  
+
+![Most Large US Cities had at least 25,000 manufacturing jobs](images/mfg_tot_emp_2015_lollipop.png)
+
+![Wichita and San Jose lead large cities in the percentage share of jobs in manufacturing](images/mfg_share_2015_lollipop.png)
+
+The general patterns of manufacturing employment are decidedly mixed. Most cities have lost manufacturing employment since 2004 due primarily to the extreme shock of the Great Recession. That being said, manufacturing employment has not only recovered but also grown in eight cities: Portland, Minneapolis, Tulsa, San Jose, Louisville, Austin, Houston, and Arlington. These cities all specialize in different areas and have dramatically different absolute and relative amounts of manufacturing employment suggesting that their success is not necessarily tied to one particular industry, region of the country, or land-use regime. 
+
+While manufacturing occupies much of the rhetorical space in debates on urban industrial employment, manufacturers are not the only users of industrial land nor is is necessarily the primary source of what many would consider industrial jobs. Utilities, wholesale distribution businesses and even urban cannabis growers all require access to industrial land, not to mention many of the ostensibly non-industrial occupations, such as clerks and data analysts, that still often work onsite to support industrial operations. In order to capture these jobs I summed the jobs for agriculture, mining and oil/gas extraction, utilities, manufacturing, wholesale trade, and transportation and warehousing. These industrial categories are admittedly broad but many of their sub-industries and largest occupational groups correspond to what we would normally view as "industrial" jobs. 
+
+Similar to manufacturing jobs, the cities with the most dramatic industrial jobs growth belong to cities with robust overall employment growth. Additionally, 17 cities had positive manufacturing job growth from 2004-2015. But due to the general decline in manufacturing employment, the trend of industrial job growth is lower, or negative, in many cities. For example, Long Beach's industrial employment falls from 83,640 jobs in 2004 to 73,624 jobs in 2015- a 12% drop. Excluding manufacturing, "industrial" jobs in manufacturing increased from 37,734 to 55,496 jobs, nearly a 50% increase. 
+
+Industrial jobs' share of overall employment across the cities generally fell from approximately an average share of 19.5% in 2004 to 16.7% in 2015. Twelve cities, though, have 20% or greater of their total jobs as "industrial" with Forth Worth leading the way with nearly a third of primary jobs coded as industrial in 2015. Absolute industrial employment numbers largely follow overall city labor market size with Houston, New York, and Los Angeles leading the country in overall industrial primary jobs, though Fort Worth is also in the top ten cities, unsurprising given how dependent it is upon industrial employment compared to other cities.
+
+\newpage
+\blandscape
+
+!['Industrial' employment is growing in nearly a quarter of large US cities](images/ind_tot_emp_facet.png)
+\elandscape
+
+  
+
+![Industrial jobs form the backbone of many city labor markets](images/ind_emp_share_lollipop.png)
 
 
+###PMD Policies
+
+Ten cities in the sample have what I have identified as a PMD (planned manufacturing district) type policy. In order to be identified a city had to have a separate land use classification with some form of additional protection for industrially zoned land. The archetypal example is Chicago's PMD ordinances that protect specific industrial corridors and outright ban residential conversion and require additional process steps for proposed re-zonings (see Green, 2018 for an overview). These policies vary in three main ways from one another- temporal, spatial, regulatory. First, these policies were not passed at the same time. Chicago and Portland's PMD ordinances passed in the late 1980s while the other cities generally passed their ordinances in the last 10-15 years. Spatially these policies cover different parts of their respective cities. Portland's policy covers a large swatch of industrial land in the central part of the city and on the Columbia Corridor in the northern part of the city while Baltimore's policy specifically protects port lands and other marine dependent uses. Finally, each policy has its own rules and restrictions regarding converting land to non-industrial uses. While this variation does not allow a true 1:1 comparison of policies, all of the policies make it harder to convert industrial land to non-industrial uses and so functionally all seek to reach the same goals. 
+
+| City          | Year Passed |
+|---------------|:-----------:|
+| Baltimore     |     2004    |
+| Chicago       |     1988    |
+| San Diego     |     2008    |
+| Jacksonville  |     2007    |
+| Seattle       |     2002    |
+| San Jose      |     2007    |
+| Minneapolis   |     2009    |
+| San Francisco |     2008    |
+| New York      |     2006    |
+| Portland      |     1988    |
+
+Table 1: Cities with PMD Ordinances
+
+Due to the policy goal of protecting industrial users, manufacturing and industrial employment is significantly higher in PMD block groups than non-PMD block groups, even for areas that are heavily industrial. 
+
+
+[^1]: Further technical details on the LODES data set can be found here: [https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf)
+
+
+\pagebreak
 
 #References
