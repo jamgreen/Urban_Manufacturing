@@ -9,7 +9,8 @@ pw <- scan(here("batteries.pgpss"), what = "")
 dbname <- "industrial_land"
 
 
-con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
+con <- dbConnect("PostgreSQL", host = host, user = user, 
+                 dbname = dbname, password = pw)
 
 city_lehd <- tbl(con, "lehd_places")
 city_lehd <- city_lehd %>% filter(fullname != "Bakersfield city, California")
