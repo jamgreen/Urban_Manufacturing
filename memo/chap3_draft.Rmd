@@ -3,9 +3,9 @@ title: 'Keeping Space for Jobs: Evaluating Industrial Land Protection Policies'
 author: "Jamaal Green"
 date: "3/13/2018"
 output:
-  word_document: default
   pdf_document:
     number_sections: yes
+  word_document: default
 header-includes:
 - \usepackage{pdflscape}
 - \newcommand{\blandscape}{\begin{landscape}}
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, ggthemes, here, ggplot2, sf, dplyr, extrafont, hrbrthemes,viridis)
+p_load(RPostgreSQL, ggthemes, here, ggplot2, sf, kableExtra, stargazer, dplyr, extrafont, hrbrthemes,viridis)
 
 host <- "pgsql.rc.pdx.edu"
 user <- "jamgreen"
@@ -73,13 +73,14 @@ Chapple, Curran, and Lester et al examine different angles of the question of lo
 
 #Data and Methodology
 
+
 ##Data
 
 The primary data source for this study is the Workplace Area Characteristic (WAC)  file Longitudinal Origin-Destination Employment Series (LODES) data set from the Longitudinal Household Employment Dynamics (LEHD) data set from the US Census Bureau[^1]. The LODES data set combines administrative employment data from state unemployment insurance filings with Census population information to offer a geographically fine (census block level) measure of employment for major industrial categories. In addition to its geographic specificity, most states in the country have LODES data going back to 2002 allowing for a truly longitudinal study of the changes in the geography of jobs. 
 
-For this study, I collected LODES WAC data for the years 2009 and 2015 for 48 of the US's 50 largest cities aggregated to the block group level (34,739 and 34,929 block groups total, respectively). There are 48 cities due to data incompleteness for some states in the LODES data set (Washington DC, Massachusetts). LODES data is prepared normalized to 2010 census geographies allowing for valid comparisons across time and the ability to easily join the data to other census sources. From the three years of data I collected LODES estimates of total, agricultural, mining, utilities, manufacturing, wholesale trade, and transportation employment for all primary jobs (LEHD job type code "JT01").
+For this study, I collected LODES WAC data for the years 2004-2015, but use the 2009 and 2015 years for the final model, for 48 of the US's 50 largest cities aggregated to the block group level (34,739 and 34,929 block groups total for the years 2009 and 2015, respectively). There are 48 cities due to incomplete data for some states in the LODES data set (Washington DC, Massachusetts). LODES data is prepared normalized to 2010 census geographies allowing for valid comparisons across time and the ability to easily join the data to other census sources. From the three years of data I collected LODES estimates of total, agricultural, mining, utilities, manufacturing, wholesale trade, and transportation employment for all primary jobs (LEHD job type code "JT01"). I use primary jobs as they are the highest paying job for an individual worker for the year and each primary job is matched to only one worker.
 
-Block group population data was collected from the 2005-2009 American Community Survey from NHGIS [@StevenMansonIPUMSNationalHistorical2017]. The ACS information collected included estimates of total, Non-Hispanic White, Non-Hispanic Black, and Hispanic residents. Additionally, I collected the total number of housing units and the total number of owner and renter occupied units. Finally, I calculated total population density (km^2).
+Block group population data was collected from the 2005-2009 American Community Survey from NHGIS [@StevenMansonIPUMSNationalHistorical2017]. The ACS information collected includes estimates of total, Non-Hispanic White, Non-Hispanic Black, and Hispanic residents. Additionally, I collected the total number of housing units and the total number of owner and renter occupied units. Finally, I calculated total population density (km^2).
 
 Street network density data was collected from the Environmental Protection Agency's Smart Location Database (SLD) [@EnvironmentalProtectionAgencyEPASmartLocation2013]. The SLD is the most comprehensive national level database of the urban built environment publicly available collected at the block group level. 
 
@@ -133,6 +134,7 @@ city_lehd_mfg <- city_lehd_mfg %>%
 
 city_lehd_mfg <- city_lehd_mfg %>% 
   mutate(city_name = gsub("city", " ", city_lehd_mfg$namelsad))
+
 ```
 
 While manufacturing is often the poster child for urban industrial employment and development, the availability of industrial land serves multiple kinds of industrial users allowing analysts to measure the geography of production in multiple ways. For this study, I tracked both manufacturing employment (CNS05 in the LEHD corresponding to the NAICS industry sectors 31-33) and a broader "industrial" employment category that is the sum of agricultural, mining, utilities, manufacturing, wholesale trade, and transportation and warehousing employment. 
@@ -180,7 +182,7 @@ Industrial jobs' share of overall employment across the cities generally fell fr
 
 ###PMD Policies
 
-I have identified ten cities in the sample with a PMD (planned manufacturing district) type policy. A city must have a separate land use classification with some form of additional protection for industrially zoned land and the language of the ordinance has to contain  in order to be classified as having a PMD. The archetypal example is Chicago's PMD ordinances that protect specific industrial corridors and outright ban residential conversion and require additional process steps for proposed re-zonings (see Green, 2018 for an overview). These policies vary in three main ways from one another- temporal, spatial, regulatory. First, these policies were not passed at the same time. Chicago and Portland's PMD ordinances passed in the late 1980s while the other cities generally passed their ordinances in the last 10-15 years. Spatially these policies cover different parts of their respective cities. Portland's policy covers a large swatch of industrial land in the central part of the city and on the Columbia Corridor in the northern part of the city while Baltimore's policy specifically protects port lands and other marine dependent uses. Finally, each policy has its own rules and restrictions regarding converting land to non-industrial uses. While this variation does not allow a true 1:1 comparison of policies, all of the policies make it harder to convert industrial land to non-industrial uses and so functionally all seek to reach the same goals. 
+I have identified ten cities in the sample with a PMD (planned manufacturing district) type policy. A city must have a separate land use classification with some form of additional protection for industrially zoned land and the language of the ordinance has to contain  in order to be classified as having a PMD. The archetypal example is Chicago's PMD ordinances that protect specific industrial corridors and outright ban residential conversion and require additional process steps for proposed re-zonings (see [@GreenZoningJobsIndustrial2018] for an overview). These policies vary in three main ways from one another- temporal, spatial, and regulatory. First, these policies were not passed at the same time. Chicago and Portland's PMD ordinances passed in the late 1980s while the other cities generally passed their ordinances in the last 10-15 years. Spatially these policies cover different parts of their respective cities. Portland's policy covers a large swatch of industrial land in the central part of the city and on the Columbia Corridor in the northern part of the city while Baltimore's policy specifically protects port lands and other marine dependent uses. Finally, each policy has its own rules and restrictions regarding converting land to non-industrial uses. While this variation does not allow a true 1:1 comparison of policies, all of the policies make it harder to convert industrial land to non-industrial uses and so functionally all seek to reach the same goals. 
 
 | City          | Year Passed |
 |---------------|:-----------:|
@@ -197,8 +199,61 @@ I have identified ten cities in the sample with a PMD (planned manufacturing dis
 
 Table 1: Cities with PMD Ordinances
 
-Due to the policy goal of protecting industrial users, manufacturing and industrial employment is significantly higher in PMD block groups than non-PMD block groups, even for areas that are heavily industrial. Blcok groups within PMDs, on average, have between six to eight times the manufacturing employment of non-covered block groups with at least one manufacturing job and around seven to eight times the amount of "industrial" employment. One way of visualizing this is looking at average manufacturing and industrial employment shares for PMD and non-PMD block groups over time.  
+Due to the policy goal of protecting industrial users, manufacturing and industrial employment is significantly higher in PMD block groups than non-PMD block groups, even for areas that are heavily industrial. For example, subsetting all block groups with at least one industrial job in 2015 for the 48 large cities in the sample, block groups within PMDs, on average, had three times as many total jobs, twice as many manufacturing jobs, and seven and a half times more industrial employment than non-covered block groups. While the differences in employment are fairly large the differences in population are less so. Using the 2005-2009 ACS sample, average total population for block groups within PMDs is only 200 people less than non-PMD blockgroups. Similar differences between PMD and non-PMD groups are also seen with the number of total housing units, though PMD block groups have a larger proportion of renters than in non-covered block groups. I performed t-tests on the population measures and all 
 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+city_lehd <- city_lehd %>% ungroup() %>% mutate(pmd_policy = replace(pmd_policy, is.na(pmd_policy), "Non-PMD"))
+
+acs_tab <- tbl(con, "propensity_blkgrp")
+acs_tab <- collect(acs_tab)
+
+city_lehd <- city_lehd %>% left_join(acs_tab, by = c("bg_fips" = "geoid"))
+
+lehd_pmd_diff2015 <- city_lehd %>% mutate(ind_emp = cns01 + cns02 + cns03 + cns05 + cns06 + cns08) %>% 
+  filter(year == 2015, ind_emp >= 1) %>% 
+   group_by(pmd_policy) %>% 
+  summarise_if(is.numeric, funs(mean, median), na.rm = TRUE)
+
+lehd_pmd_diff2015 <- lehd_pmd_diff2015 %>% 
+  select(1:2, 9, 35)
+
+names(lehd_pmd_diff2015) <- c("PMD Policy", "Avg. Total Employment", "Avg. Mfg. Employment", "Avg. 'Industrial' Employment")
+
+kable(lehd_pmd_diff2015, format = "latex", caption = "Differences in  Employment between PMD and Non-PMD blockgroups, 2015", digits = 2) %>% kable_styling(position = "center")
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+acs_pmd_diff <- city_lehd %>% 
+  filter(year == 2007, !is.na(GISJOIN)) %>% 
+  group_by(pmd_policy) %>% 
+  summarise_if(is.numeric, mean, na.rm = TRUE)
+
+acs_pmd_diff <- acs_pmd_diff %>% 
+  select(1, 27, 32:34)
+
+kable(acs_pmd_diff, format = "latex", caption = "Differences in Population Characteristics between PMD and Non-PMD blockgroups", digits = 2, col.names = c("PMD Policy", "Total Pop.", "Housing Units", "Owner Occ.", "Renter")) %>% 
+  kable_styling(position = "center")
+
+```
+
+
+##Identification Strategy
+
+In order to measure the impacts of PMD-type policy, I employ a quasi-experimental method-- propensity score weighting [@AustinIntroductionPropensityScore2011; @Rosenbaumcentralrolepropensity1983]. Propensity scores are the probability of a unit of observation receiving treatment conditioned on a set of characteristics. Traditionally, researchers use a logistic or probit regression in order to estimate the probabilities and then calculate weights using the probabilities. For this project I am using the inverse probability method with the goal of estimating the Average Treatment Effect (ATE) which is the average effect of moving the entire population from control to treatment (in this case transitioning block groups to industrial preservation). Once the propensity score is estimated and the weights calculated the weights are used in a weighted regression of the treatment dummy variable regressed on the dependent variable. If the dummy variable is significant, then this signals a causal effect of the treatment on your observations. 
+
+In order to calculate weights I estimated an initial logistic regression calculating predicted probability of a block group being covered by an industrial preservation policy:
+
+$$E(y|x) = \beta_0 + \beta_1 x_1... + \beta_k x_k$$
+| Variable                   |    Year    | Data Source |
+|----------------------------|:----------:|------------:|
+| % Renter                   | 2005-2009  |         ACS |
+| % Manufacturing/Industrial |    2004    |        LEHD |
+| Distance from CBD (km)     |      -     |  Calculated |
+| Street Network Density     |    2010    |     EPA SLD |
+
+Table 4: Independent variables for the logit model
 
 [^1]: Further technical details on the LODES data set can be found here: [https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf)
 
