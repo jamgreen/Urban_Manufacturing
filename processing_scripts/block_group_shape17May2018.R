@@ -45,6 +45,6 @@ names(state_blk_grps_test) <- tolower(names(state_blk_grps_test))
 #          delete_dsn = TRUE)
 
 st_write(dsn = con, obj = state_blk_grps_test, geom_name = "geom", 
-            table = "blk_grp_shapes", drop = TRUE, binary = TRUE)
+            table = "blk_grp_shapes", overwrite = TRUE, binary = TRUE)
 
 dbDisconnect(con)

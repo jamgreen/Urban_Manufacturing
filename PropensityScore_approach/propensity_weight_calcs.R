@@ -1,45 +1,46 @@
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, car, cobalt, ipw,  sf, dplyr, dbplyr)
+p_load(RPostgreSQL, car, here, cobalt, ipw,  sf, dplyr, dbplyr)
 
 
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
-host <- "pgsql.rc.pdx.edu"
+host <- "pgsql102.rc.pdx.edu"
 user <- "jamgreen"
-pw <- scan("batteries.pgpss", what = "")
+pw <- scan(here("batteries.pgpss"), what = "")
 dbname <- "industrial_land"
 
 
-con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
+con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, 
+                 password = pw)
+
+
+#pull in lehd and calc basic industrial shares, filter to 2008 
+
+city_lehd <- st_read(dsn = con, "lehd_places") 
 
 
 
+city_lehd <- city_lehd %>% 
+  mutate(ind_emp = cns01 + cns02 + cns03 + cns05 + cns06 + cns08,
+  indshare = ind_emp/c000, mfgshare = cns05/c000)
 
-city_lehd_mfg <- st_read_db(conn = con, query = "select distinct a.blk_grp_id, a.tot_emp, a.ag_emp, a.mining_emp,
-a.util_emp, a.mfg_emp, a.wholesale_emp, a.transpo_emp,
-a.place_geoid, a.city_name, b.totpop as totpop, b.white_nh as white_nh, 
-b.black_nh as black_nh, b.hispanic as hispanic, b.mhi as mhi, 
-b.housing_units as tot_units, b.owner_occ as owner_occ, 
-b.renter_occ as renter_occ,
-d.d3a as network_density, 
-b.totpop/(ST_Area(a.geom)/1000000) as pop_density,
-c.pmd_dummy as pmd_dummy, a.geom
-	FROM lehd_places_2004_nad83albers a 
-		LEFT JOIN propensity_blkgrp b ON
-		a.blk_grp_id = b.geoid 
-		LEFT JOIN lehd04_pmd c ON
-		a.blk_grp_id = c.blk_grp_id
-		LEFT JOIN epa_sld d ON
-		a.blk_grp_id = d.geoid10;")
+city_lehd08 <- city_lehd %>% filter(year == 2008)
 
+#bring in the acs census file and calc pop percent shares
 
+acs <- tbl(con, "propensity_blkgrp")
+acs <- collect(acs)
 
-city_lehd_mfg <- city_lehd_mfg %>% 
-  mutate(ind_emp = ag_emp + mining_emp + util_emp + mfg_emp + wholesale_emp + transpo_emp,
-  IndShare = ind_emp/tot_emp, MfgShare = mfg_emp/tot_emp) %>% 
-  distinct(blk_grp_id, .keep_all = TRUE)
+acs <- acs %>% 
+  mutate(white_per = white_nh/totpop, black_per = black_nh/totpop,
+         api_per = (asian_nh + pi_alone)/totpop, hispanic_per = hispanic/totpop,
+          owner_per = owner_occ/housing_units, 
+         renter_per = renter_occ/housing_units)
 
+#join acs to lehd 2008
 
+city_lehd08 <- city_lehd08 %>% 
+  inner_join(acs, by = c("bg_fips" = "geoid10"))
 #filter out blockgroups with greater than 34 tot_emp (first quartile) and replace NAs with 0
 #city_lehd_mfg <- city_lehd_dist %>% filter(tot_emp > 34)
 city_lehd_mfg[is.na(city_lehd_mfg)] <- 0
@@ -52,17 +53,6 @@ city_lehd_mfg$BlackPer[is.nan(city_lehd_mfg$BlackPer)] <- 0
 city_lehd_mfg$HispPer[is.nan(city_lehd_mfg$HispPer)] <- 0
 city_lehd_mfg$RenterPer[is.nan(city_lehd_mfg$RenterPer)] <- 0
 
-#join to the city_dist table for final calcs
-
-city_dist <- tbl(con, "city_dist_km")
-city_dist <- collect(city_dist)
-
-city_lehd_mfg <- city_lehd_mfg %>% left_join(city_dist, by = c("blk_grp_id" = "blk_grp_id")) %>% 
-  distinct(blk_grp_id, .keep_all = TRUE)
-
-city_lehd_mfg$pmd <- ifelse(city_lehd_mfg$pmd_dummy == TRUE, 1, 0)
-
-#city_lehd_mfg <- city_lehd_mfg[!duplicated(city_lehd_mfg$blk_grp_id), ] 
 
 
 #using ipw to compare the weights calculation-----

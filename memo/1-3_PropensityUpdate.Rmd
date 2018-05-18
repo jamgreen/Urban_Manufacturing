@@ -158,12 +158,10 @@ In order to calculate weights I estimated an initial logistic regression calcula
 
 $$E(y|x) = \beta_0 + \beta_1 x_1... + \beta_k x_k$$
 
-The regressors here are share of employment that is manufacturing or industrial, percent of the block group population that is Non-Hispanic Black, percent of the block group that is Hispanic, percent of block group's housing units that are renter occupied, distance from the city central business district to the block group centroid in kilometers, and street network density. 
+The regressors here are share of employment that is manufacturing or industrial, percent of a block group's housing units that are renter occupied, distance from the city central business district to the block group centroid in kilometers, and street network density. 
 
 | Variable                   |    Year    | Data Source |
 |----------------------------|:----------:|------------:|
-| % Black                    | 2005-2009  |         ACS |
-| % Hispanic                 | 2005-2009  |         ACS |
 | % Renter                   | 2005-2009  |         ACS |
 | % Manufacturing/Industrial |    2004    |        LEHD |
 | Distance from CBD (km)     |      -     |  Calculated |
@@ -173,7 +171,7 @@ Table 2: Independent variables for the logit model
 
 ###Unstabilized and Stabilized Propensity Weights
 
-There are two main approaches for calculating propensity weights once the predicted probabilities are calculated- stabilized and unstabilized weights. The equation for unstabilized inverse probability weights for observations in treatment group is $\omega = 1/\hat{e}(x)$ and for the control group $\omega = 1/1-\hat{e}(x)$. While often used, unstabilized weights can have very wide distributions of weights and can hamper overall model efficiency. Stabilized weights add a term to the numerator, in the case of this model the numerator is the probability of the exposure level, in this case it is simply an intercept only logistic regression on the treatment variable- $s\omega_i = \beta_0/E(y|x)$. The following models use both stabilized and unstabilized weights calculated by the ipw package in the R Statistical Programming Lanugage version 3.4.2.
+There are two main approaches for calculating propensity weights once the predicted probabilities are calculated- stabilized and unstabilized weights. The equation for unstabilized inverse probability weights for observations in treatment group is $\omega = 1/\hat{e}(x)$ and for the control group $\omega = 1/1-\hat{e}(x)$. While often used, unstabilized weights can have very wide distributions of weights and can hamper overall model efficiency. Stabilized weights add a term to the numerator, in the case of this model the numerator is the probability of the exposure level, in this case it is simply an intercept only logistic regression on the treatment variable- $s\omega_i = \beta_0/E(y|x)$. The following models use both stabilized and unstabilized weights calculated by the ipw package [@vanderWalipwPackageInverse2015] in the R Statistical Programming Language [@RCoreTeamlanguageenvironmentstatistical2016].
 
 The following logitics regression tables show the underlying models that will be used to calculate the eventual weights. All dependent variables are significant and follow their expected signs. Table 4 shows the moderating influence of standardizing weights significantly shrinking the size and distribution of weights for the manufacturing and industrial employment models. 
 
