@@ -24,26 +24,26 @@ city_lehd <- city_lehd %>%
   mutate(ind_emp = cns01 + cns02 + cns03 + cns05 + cns06 + cns08,
   indshare = ind_emp/c000, mfgshare = cns05/c000)
 
-city_lehd08 <- city_lehd %>% filter(year == 2008)
 
 #bring in the acs census file and calc pop percent shares
 
-acs <- tbl(con, "propensity_blkgrp")
+acs <- tbl(con, "propensity_blkgrp_2006_2010")
 acs <- collect(acs)
 
 acs <- acs %>% 
   mutate(white_per = white_nh/totpop, black_per = black_nh/totpop,
-         api_per = (asian_nh + pi_alone)/totpop, hispanic_per = hispanic/totpop,
+         api_per = api/totpop, hispanic_per = hispanic/totpop,
           owner_per = owner_occ/housing_units, 
          renter_per = renter_occ/housing_units)
 
 #join acs to lehd 2008
 
-city_lehd08 <- city_lehd08 %>% 
+city_lehd_acs <- city_lehd %>% 
   inner_join(acs, by = c("bg_fips" = "geoid10"))
 #filter out blockgroups with greater than 34 tot_emp (first quartile) and replace NAs with 0
 #city_lehd_mfg <- city_lehd_dist %>% filter(tot_emp > 34)
-city_lehd_mfg[is.na(city_lehd_mfg)] <- 0
+city_lehd_acs$pmd_policy <- if_else(is.na(city_lehd_acs$pmd_policy), "Non-PMD", city_lehd_acs$pmd_policy)
+
 
 #calculate population shares for white and non-white
 city_lehd_mfg <- city_lehd_mfg %>% mutate(BlackPer = black_nh/totpop, HispPer = hispanic/totpop,
