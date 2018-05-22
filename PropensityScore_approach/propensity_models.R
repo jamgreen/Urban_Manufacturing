@@ -1,5 +1,5 @@
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(car, lmtest, sandwich, survey, tidyverse)
+p_load(lmtest, sandwich, survey, readr)
 
 prop_final_full <- read_csv("data/model/city_lehd_2004_full_propensity.csv")
 prop_final_restricted <- read_csv("data/model/city_lehd_2004_restricted_propensity.csv")
@@ -37,7 +37,10 @@ mfg2_restricted_svy_ipw <- svyglm(mfg_emp_change ~ pmd_dummy, design = prop_rest
 ind2_full_svy_ipw <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_full_cluster_ipw)
 ind2_restricted_svy_ipw <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_restricted_cluster_svy_ipw)
 
-#non-survey unstable mfg and industry
+rm(list = c("prop_full_cluster_svy", "prop_restricted_cluster_svy", "prop_full_cluster_ipw", 
+            "prop_restricted_cluster_svy_ipw"))
+
+#non-survey unstable mfg and industry--------------
 #non-survey
 
 
