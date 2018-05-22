@@ -1,40 +1,72 @@
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
 p_load(car, lmtest, sandwich, survey, tidyverse)
 
-prop_final <- read_csv("data/model/propensity_score_mfg_ind_table.csv")
-
+prop_final_full <- read_csv("data/model/city_lehd_2004_full_propensity.csv")
+prop_final_restricted <- read_csv("data/model/city_lehd_2004_restricted_propensity.csv")
 #Estimating final propensity score models using both survey and non-survey package-----
-#with stabilized and unstabilized weights
+#with stabilized and unstabilized weights when I can fix impw issues
 
 #set up survey objects
 
-prop_mfg_unstable_svy <- svydesign(ids = ~ 1, weights = ~ mfg_ps, data = prop_final)
-prop_mfg_stable_svy <- svydesign(ids = ~ 1, weights = ~ ipw_mfg_stable, data = prop_final)
+# #survey objects without cluster id
+# prop_full_svy <- svydesign(ids = ~ 1, weights = ~ logit_wgt_full, data = prop_final_full)
+# prop_restricted_svy <- svydesign(ids = ~ 1, weights = ~ logit_wgt_restricted, 
+#                                  data = prop_final_restricted)
+# 
+# prop_full_svy_ipw <- svydesign(ids = ~ 1, weights = ~ logit_ipw_full, data = prop_final_full)
+# prop_restricted_svy_ipw <- svydesign(ids = ~ 1, weights = ~ logit_ipw_restricted, 
+#                                      data = prop_final_restricted)
 
-prop_ind_unstable_svy <- svydesign(ids = ~ 1, weights = ~ ind_ps, data = prop_final)
-prop_ind_stable_svy <- svydesign(ids = ~ 1, weights = ~ ipw_ind_stable, data = prop_final)
+#survey objects with clustering id
+prop_full_cluster_svy <- svydesign(ids = ~ namelsad, weights = ~ logit_wgt_full, data = prop_final_full)
+prop_restricted_cluster_svy <- svydesign(ids = ~ namelsad, weights = ~ logit_wgt_restricted, 
+                                         data = prop_final_restricted)
 
-#unstabilized weight models, both survey and non-survey-----  
+prop_full_cluster_ipw <- svydesign(ids = ~ namelsad, weights = ~ logit_ipw_full, data = prop_final_full)
+prop_restricted_cluster_svy_ipw <- svydesign(ids = ~ namelsad, weights = ~ logit_ipw_restricted, 
+                                         data = prop_final_restricted)
+
+
+#unstabilized weight models, both survey and non-survey with clustered SEs-----  
 
 #unstable manufacturing
 
-unstable_mfg1 <- lm(mfg_change ~ pmd_dummy, weights = mfg_ps, data = prop_final)
+#non-survey
 
-unstable_mfg1_svy <- svyglm(mfg_change ~ pmd_dummy, design = prop_mfg_unstable_svy)
+mfg1_full <- lm(mfg_emp_change ~ pmd_dummy, weights = logit_wgt_full, data = prop_final_full)
+mfg1_restricted <- lm(mfg_emp_change ~ pmd_dummy, weights = logit_wgt_restricted, 
+                      data = prop_final_restricted)
 
-unstable_mfg2 <- lm(mfg_change ~ pmd_dummy + factor(city), weights = mfg_ps,data = prop_final)
+mfg_unstable_cluster_full <- multiwayvcov::cluster.vcov(mfg1_full, cluster = prop_final_full$namelsad)
+cf_mfg1 <- lmtest::coeftest(mfg1_full, mfg_unstable_cluster_full)
 
-unstable_mfg2_svy <- svyglm(mfg_change ~ pmd_dummy + factor(city), design = prop_mfg_unstable_svy)
+mfg_unstable_cluster_restricted <- multiwayvcov::cluster.vcov(mfg1_restricted, 
+                                                              cluster = prop_final_restricted$namelsad)
+cf_mfg2 <- lmtest::coeftest(mfg1_restricted, mfg_unstable_cluster_restricted)
+
+#survey
+mfg1_full_svy <- svyglm(mfg_emp_change ~ pmd_dummy, design = prop_full_cluster_svy)
+mfg1_restricted_svy <- svyglm(mfg_emp_change ~ pmd_dummy, design = prop_restricted_cluster_svy)
 
 #unstable industry
+#non-survey
 
-unstable_ind1 <- lm(ind_change ~ pmd_dummy, weights = ind_ps, data = prop_final)
+ind1_full <- lm(ind_emp_change ~ pmd_dummy, weights = logit_wgt_full, data = prop_final_full)
+ind1_restricted <- lm(ind_emp_change ~ pmd_dummy, weights = logit_wgt_restricted, 
+                      data = prop_final_restricted)
 
-unstable_ind1_svy <- svyglm(ind_change ~ pmd_dummy, design = prop_ind_unstable_svy)
+ind_unstable_cluster_full <- multiwayvcov::cluster.vcov(ind1_full, cluster = prop_final_full$namelsad)
+cf_ind1 <- lmtest::coeftest(ind1_full, ind_unstable_cluster_full)
 
-unstable_ind2 <- lm(ind_change ~ pmd_dummy + factor(city), weights = ind_ps,data = prop_final)
+ind_unstable_cluster_restricted <- multiwayvcov::cluster.vcov(ind1_restricted, 
+                                                              cluster = prop_final_restricted$namelsad)
 
-unstable_ind2_svy <- svyglm(ind_change ~ pmd_dummy + factor(city), design = prop_ind_unstable_svy)
+cf_ind2 <- lmtest::coeftest(ind1_restricted, ind_unstable_cluster_restricted)
+
+#survey
+ind1_full_svy <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_full_cluster_svy)
+ind1_restricted_svy <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_restricted_cluster_svy)
+
 
 #stabilized weight models, both survey and non-survey -----
 
