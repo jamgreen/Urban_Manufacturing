@@ -114,13 +114,18 @@ ind_full_logit <- glm(pmd_dummy ~ network_density + dist_km + indshare + owner_p
                       data = city_lehd_acs04, family = "binomial")
 
 city_lehd_acs04$logit_wgt_full <- predict(ind_full_logit, type = "response")
-city_lehd_acs04$logit_ipw_full <- 1/city_lehd_acs04$logit_wgt_full
+city_lehd_acs04$logit_ipw_full <- if_else(city_lehd_acs04$pmd_dummy == 1,
+                                          1/city_lehd_acs04$logit_wgt_full, 
+                                          1/(1 - city_lehd_acs04$logit_wgt_full))
 
 ind_restricted_logit <-  glm(pmd_dummy ~ network_density + dist_km + indshare + owner_per,
                              data = city_lehd_acs04_restricted, family = "binomial")
 
 city_lehd_acs04_restricted$logit_wgt_restricted <- predict(ind_restricted_logit, type = "response")
-city_lehd_acs04_restricted$logit_ipw_restricted <- 1/city_lehd_acs04_restricted$logit_wgt_restricted
+city_lehd_acs04_restricted$logit_ipw_restricted <- if_else(city_lehd_acs04_restricted$pmd_dummy == 1,
+                                                      1/city_lehd_acs04_restricted$logit_wgt_restricted, 
+                                                      1/(1 - city_lehd_acs04_restricted$logit_wgt_restricted))
+
 
 #until i can fix the ipw issue i'll export the model to csv
 
