@@ -1,8 +1,8 @@
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(lmtest, sandwich, survey, readr)
+p_load(lmtest, sandwich, survey)
 
-prop_final_full <- read_csv("data/model/city_lehd_2004_full_propensity.csv")
-prop_final_restricted <- read_csv("data/model/city_lehd_2004_restricted_propensity.csv")
+prop_final_full <- readRDS("data/model/city_lehd_2004_full_propensity.RDS")
+prop_final_restricted <- readRDS("data/model/city_lehd_2004_restricted_propensity.RDS")
 #Estimating final propensity score models using both survey and non-survey package-----
 #with stabilized and unstabilized weights when I can fix impw issues
 

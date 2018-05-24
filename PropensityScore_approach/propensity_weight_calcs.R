@@ -132,7 +132,8 @@ city_lehd_acs04_restricted$logit_ipw_restricted <- if_else(city_lehd_acs04_restr
 readr::write_csv(city_lehd_acs04, "data/model/city_lehd_2004_full_propensity.csv")
 readr::write_csv(city_lehd_acs04_restricted, "data/model/city_lehd_2004_restricted_propensity.csv")
 
-
+saveRDS(city_lehd_acs04, "data/model/city_lehd_2004_full_propensity.RDS")
+saveRDS(city_lehd_acs04_restricted, "data/model/city_lehd_2004_restricted_propensity.RDS")
 
 #test balance with cobalt
 
