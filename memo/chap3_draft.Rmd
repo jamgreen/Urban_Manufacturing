@@ -10,7 +10,7 @@ header-includes:
 - \usepackage{pdflscape}
 - \newcommand{\blandscape}{\begin{landscape}}
 - \newcommand{\elandscape}{\end{landscape}}
-bibliography: tmp-clean-file.bib
+bibliography: dissertation_Oct2017.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, ggthemes, here, ggplot2, sf, kableExtra, stargazer, dplyr, extrafont, hrbrthemes,viridis)
+p_load(RPostgreSQL, ggthemes, ggplot2, kableExtra, here,stargazer, dplyr, dbplyr, extrafont, hrbrthemes,viridis, survey)
 
 host <- "pgsql.rc.pdx.edu"
 user <- "jamgreen"
@@ -34,9 +34,48 @@ dbname <- "industrial_land"
 
 con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
 
+```
+
+```{r model_source, message=FALSE, warning=FALSE, include=FALSE}
+
+
+prop_final_full <- readRDS(here("data/model/city_lehd_2004_full_propensity.RDS"))
+prop_final_restricted <- readRDS(here("data/model/city_lehd_2004_restricted_propensity.RDS"))
+#Estimating final propensity score models using both survey and non-survey package-----
+#with stabilized and unstabilized weights when I can fix impw issues
+
+#set up survey objects
+
+
+#survey objects with clustering id
+prop_full_cluster_svy <- svydesign(ids = ~ namelsad, weights = ~ logit_wgt_full, data = prop_final_full)
+prop_restricted_cluster_svy <- svydesign(ids = ~ namelsad, weights = ~ logit_wgt_restricted, 
+                                         data = prop_final_restricted)
+
+prop_full_cluster_ipw <- svydesign(ids = ~ namelsad, weights = ~ logit_ipw_full, data = prop_final_full)
+prop_restricted_cluster_svy_ipw <- svydesign(ids = ~ namelsad, weights = ~ logit_ipw_restricted, 
+                                         data = prop_final_restricted)
+
+
+#unstabilized weight models, both survey and non-survey with clustered SEs-----  
+
+#survey unstable manufacturing and industry
+
+
+#survey
+
+mfg2_full_svy_ipw <- svyglm(mfg_emp_change ~ pmd_dummy, design = prop_full_cluster_ipw)
+mfg2_restricted_svy_ipw <- svyglm(mfg_emp_change ~ pmd_dummy, design = prop_restricted_cluster_svy_ipw)
+
+ind2_full_svy_ipw <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_full_cluster_ipw)
+ind2_restricted_svy_ipw <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_restricted_cluster_svy_ipw)
+
+rm(list = c("prop_full_cluster_svy", "prop_restricted_cluster_svy", "prop_full_cluster_ipw", 
+            "prop_restricted_cluster_svy_ipw", "prop_final_full", "prop_final_restricted"))
 
 
 ```
+
 
 #Introduction
 
@@ -241,6 +280,8 @@ kable(acs_pmd_diff, format = "latex", caption = "Differences in Population Chara
   kable_styling(position = "center")
 
 ```
+
+
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 
 dbDisconnect(con)
@@ -249,11 +290,9 @@ dbDisconnect(con)
 
 ##Identification Strategy
 
-In order to measure the impacts of PMD-type policy, I employ a quasi-experimental method-- propensity score weighting [@AustinIntroductionPropensityScore2011; @Rosenbaumcentralrolepropensity1983]. Propensity scores are the probability of a unit of observation receiving treatment conditioned on a set of characteristics. Traditionally, researchers use a logistic or probit regression in order to estimate the probabilities and then calculate weights using the probabilities. For this project I am using the inverse probability method with the goal of estimating the Average Treatment Effect (ATE) which is the average effect of moving the entire population from control to treatment (in this case transitioning block groups to industrial preservation). Once the propensity score is estimated and the weights calculated the weights are used in a weighted regression of the treatment dummy variable regressed on the dependent variable. If the dummy variable is significant, then this signals a causal effect of the treatment on your observations. 
+In order to measure the impacts of PMD-type policy, I employ a quasi-experimental method-- propensity score weighting [@AustinIntroductionPropensityScore2011; @Rosenbaumcentralrolepropensity1983]. Propensity scores are the probability of a unit of observation receiving treatment conditioned on a set of characteristics. Traditionally, researchers use a logistic or probit regression in order to estimate the probabilities and then calculate weights using the probabilities. For this project I am using the inverse probability method with the goal of estimating the Average Treatment Effect (ATE) which is the average effect of moving the entire population from control to treatment (in this case transitioning block groups to industrial preservation). Once the propensity score is estimated and the weights are calculated the weights are used in a weighted regression of the treatment dummy variable regressed on the dependent variable. If the dummy variable is significant, then this signals a causal effect of the treatment on your observations. 
 
-In order to calculate weights I estimated an initial logistic regression calculating predicted probability of a block group being covered by an industrial preservation policy:
-
-$$E(y|x) = \beta_0 + \beta_1 x_1... + \beta_k x_k$$
+In order to calculate weights I estimated an initial logistic regression calculating predicted probability of a block group being covered by an industrial preservation policy based on the variables in table 4. The block groups included are all block groups in the 48 cities in 2004. The resulting full sample includes 34,006 block groups and the restricted 18,093. Then I calculated the inverse probability weights: for treated block groups, $1/e_i$; and for untreated groups, $1/(1-e_i)$. The $e$ term is the estimated probability for the $i$th observation in the sample. These weights are then applied to a final regression model regressing the change in employment in a block group from 2009-2015 on a dummy variable for whether or not the block group is in a PMD. Robust standard errors are calculated and clustered at the city level using the survey package in R [@Lumleysurveyanalysiscomplex2017]. 
 
 
 
@@ -266,7 +305,65 @@ $$E(y|x) = \beta_0 + \beta_1 x_1... + \beta_k x_k$$
 
 Table 4: Independent variables for the logit model
 
+\pagebreak
+
+\begin{table}[!htbp] \centering 
+  \caption{Logit Analysis of Block Group Inclusion in PMD} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lcc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{2}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-3} 
+\\[-1.8ex] & \multicolumn{2}{c}{pmd\_dummy} \\ 
+ & Restricted Sample & Full Sample \\ 
+\\[-1.8ex] & (1) & (2)\\ 
+\hline \\[-1.8ex] 
+ network\_density & $-$0.022$^{**}$ & $-$0.027$^{***}$ \\ 
+  & (0.010) & (0.010) \\ 
+  & & \\ 
+ dist\_km & $-$0.069$^{***}$ & $-$0.074$^{***}$ \\ 
+  & (0.016) & (0.016) \\ 
+  & & \\ 
+ indshare & 2.824$^{***}$ & 3.583$^{***}$ \\ 
+  & (0.255) & (0.231) \\ 
+  & & \\ 
+ owner\_per & $-$0.944$^{***}$ & $-$1.082$^{***}$ \\ 
+  & (0.312) & (0.306) \\ 
+  & & \\ 
+ Constant & $-$4.184$^{***}$ & $-$4.598$^{***}$ \\ 
+  & (0.346) & (0.339) \\ 
+  & & \\ 
+\hline \\[-1.8ex] 
+Observations & 18,093 & 34,006 \\ 
+Log Likelihood & $-$806.206 & $-$851.717 \\ 
+Akaike Inf. Crit. & 1,622.411 & 1,713.434 \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{2}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table} 
+
+##Results
+
+Overall, this study finds a positive and significant effect on job growth of PMD designation for *industrial* jobs with no significant effect of designation for *manufacturing* jobs. 
+
+Table 6 shows the results of the propensity score-weighted models. Results in divided into two main groups, the first two models estimate the impact of the PMD designation on industry and manufacturing change for the full sample of block groups while models three and four estimate the PMD impact on the smaller restricted sample to block groups with at least four industrial jobs. Overall, the ATE of PMD designation is both significant and positive for industrial jobs and non-significant and marginally positive for manufacturing jobs under both the full and restricted samples. 
+
+```{r full_model_results, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+
+stargazer(mfg2_full_svy_ipw, ind2_full_svy_ipw, mfg2_restricted_svy_ipw, ind2_restricted_svy_ipw, title = "Effects of PMD designation on industrial/Manufacturing\n Job Change, 2009-2015", column.labels = c("Full Sample", "Restricted Sample", "Full Sample", "Restricted Sample"), model.numbers = TRUE, nobs = TRUE, header = FALSE)
+
+
+
+```
+
 [^1]: Further technical details on the LODES data set can be found here: [https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf)
+
+
+
+
+\pagebreak
 
 
 
