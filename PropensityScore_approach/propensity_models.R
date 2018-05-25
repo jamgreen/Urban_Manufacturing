@@ -38,7 +38,8 @@ ind2_full_svy_ipw <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_full_clust
 ind2_restricted_svy_ipw <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_restricted_cluster_svy_ipw)
 
 rm(list = c("prop_full_cluster_svy", "prop_restricted_cluster_svy", "prop_full_cluster_ipw", 
-            "prop_restricted_cluster_svy_ipw", "prop_final_full", "prop_final_restricted"))
+            "prop_restricted_cluster_svy_ipw", "prop_final_full", "prop_final_restricted",
+            "mfg1_full_svy", "mfg1_restricted_svy", "ind1_full_svy", "ind1_restricted_svy"))
 
 #non-survey unstable mfg and industry--------------
 #non-survey
