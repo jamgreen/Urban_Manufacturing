@@ -35,6 +35,7 @@ dbname <- "industrial_land"
 con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
 
 
+
 ```
 
 #Introduction
@@ -201,15 +202,18 @@ Table 1: Cities with PMD Ordinances
 
 Due to the policy goal of protecting industrial users, manufacturing and industrial employment is significantly higher in PMD block groups than non-PMD block groups, even for areas that are heavily industrial. For example, subsetting all block groups with at least one industrial job in 2015 for the 48 large cities in the sample, block groups within PMDs, on average, had three times as many total jobs, twice as many manufacturing jobs, and seven and a half times more industrial employment than non-covered block groups. While the differences in employment are fairly large the differences in population are less so. Using the 2005-2009 ACS sample, average total population for block groups within PMDs is only 200 people less than non-PMD blockgroups. Similar differences between PMD and non-PMD groups are also seen with the number of total housing units, though PMD block groups have a larger proportion of renters than in non-covered block groups. I performed t-tests on the population measures and all 
 
+\pagebreak
+
+
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 city_lehd <- city_lehd %>% ungroup() %>% mutate(pmd_policy = replace(pmd_policy, is.na(pmd_policy), "Non-PMD"))
 
-acs_tab <- tbl(con, "propensity_blkgrp")
+acs_tab <- tbl(con, "propensity_blkgrp_2006_2010")
 acs_tab <- collect(acs_tab)
 
-city_lehd <- city_lehd %>% left_join(acs_tab, by = c("bg_fips" = "geoid"))
+city_lehd <- city_lehd %>% inner_join(acs_tab, by = c("bg_fips" = "geoid10"))
 
 lehd_pmd_diff2015 <- city_lehd %>% mutate(ind_emp = cns01 + cns02 + cns03 + cns05 + cns06 + cns08) %>% 
   filter(year == 2015, ind_emp >= 1) %>% 
@@ -237,7 +241,11 @@ kable(acs_pmd_diff, format = "latex", caption = "Differences in Population Chara
   kable_styling(position = "center")
 
 ```
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
+dbDisconnect(con)
+
+```
 
 ##Identification Strategy
 
@@ -246,18 +254,20 @@ In order to measure the impacts of PMD-type policy, I employ a quasi-experimenta
 In order to calculate weights I estimated an initial logistic regression calculating predicted probability of a block group being covered by an industrial preservation policy:
 
 $$E(y|x) = \beta_0 + \beta_1 x_1... + \beta_k x_k$$
-| Variable                   |    Year    | Data Source |
-|----------------------------|:----------:|------------:|
-| % Renter                   | 2005-2009  |         ACS |
-| % Manufacturing/Industrial |    2004    |        LEHD |
-| Distance from CBD (km)     |      -     |  Calculated |
-| Street Network Density     |    2010    |     EPA SLD |
+
+
+
+| Variable               |      Year | Data Source |
+|------------------------|:----------:|------------|
+| % Owner                | 2006-2010 |         ACS |
+| % Industrial           |      2004 |        LEHD |
+| Distance from CBD (km) |         - |  Calculated |
+| Street Network Density |      2010 |     EPA SLD |
 
 Table 4: Independent variables for the logit model
 
 [^1]: Further technical details on the LODES data set can be found here: [https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf)
 
 
-\pagebreak
 
 #References

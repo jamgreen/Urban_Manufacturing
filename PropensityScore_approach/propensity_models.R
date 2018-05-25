@@ -38,7 +38,7 @@ ind2_full_svy_ipw <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_full_clust
 ind2_restricted_svy_ipw <- svyglm(ind_emp_change ~ pmd_dummy, design = prop_restricted_cluster_svy_ipw)
 
 rm(list = c("prop_full_cluster_svy", "prop_restricted_cluster_svy", "prop_full_cluster_ipw", 
-            "prop_restricted_cluster_svy_ipw"))
+            "prop_restricted_cluster_svy_ipw", "prop_final_full", "prop_final_restricted"))
 
 #non-survey unstable mfg and industry--------------
 #non-survey
@@ -71,32 +71,5 @@ rm(list = c("prop_full_cluster_svy", "prop_restricted_cluster_svy", "prop_full_c
 
 
 #unstabilized inverse probability weights for industry and manufacturing with clustered SEs
-
-#stabilized weight models, both survey and non-survey -----
-
-#stabilized manufacturing
-
-stable_mfg1 <- lm(mfg_change ~ pmd_dummy, weights = ipw_mfg_stable,
-                data = prop_final)
-
-stable_mfg1_svy <- svyglm(mfg_change ~ pmd_dummy, design = prop_mfg_stable_svy)
-
-stable_mfg2 <- lm(mfg_change ~ pmd_dummy + factor(city), weights = ipw_mfg_stable,
-                data = prop_final)
-
-stable_mfg2_svy <- svyglm(mfg_change ~ pmd_dummy + factor(city), design = prop_mfg_stable_svy)
-
-#stabilized industry  
-
-stable_ind1 <- lm(ind_change ~ pmd_dummy, weights = ipw_ind_stable,
-                  data = prop_final)
-
-stable_ind1_svy <- svyglm(ind_change ~ pmd_dummy, design = prop_ind_stable_svy)
-
-stable_ind2 <- lm(ind_change ~ pmd_dummy + factor(city), weights = ipw_ind_stable,
-                  data = prop_final)
-
-stable_ind2_svy <- svyglm(ind_change ~ pmd_dummy + factor(city), design = prop_ind_stable_svy)
-
 
 
