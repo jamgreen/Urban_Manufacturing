@@ -215,7 +215,7 @@ Industrial jobs' share of overall employment across the cities generally fell fr
 !['Industrial' employment is growing in nearly a quarter of large US cities](images/ind_tot_emp_facet.png)
 \elandscape
 
-  
+\newpage  
 
 ![Industrial jobs form the backbone of many city labor markets](images/ind_emp_share_lollipop.png)
 
@@ -239,7 +239,7 @@ I have identified ten cities in the sample with a PMD (planned manufacturing dis
 
 Table 1: Cities with PMD Ordinances
 
-Due to the policy goal of protecting industrial users, manufacturing and industrial employment is significantly higher in PMD block groups than non-PMD block groups, even for areas that are heavily industrial. For example, subsetting all block groups with at least one industrial job in 2015 for the 48 large cities in the sample, block groups within PMDs, on average, had three times as many total jobs, twice as many manufacturing jobs, and seven and a half times more industrial employment than non-covered block groups. While the differences in employment are fairly large the differences in population are less so. Using the 2005-2009 ACS sample, average total population for block groups within PMDs is only 200 people less than non-PMD blockgroups. Similar differences between PMD and non-PMD groups are also seen with the number of total housing units, though PMD block groups have a larger proportion of renters than in non-covered block groups. I performed t-tests on the population measures and all 
+Due to the policy goal of protecting industrial users, manufacturing and industrial employment is significantly higher in PMD block groups than non-PMD block groups, even for areas that are heavily industrial. For example, subsetting all block groups with at least one industrial job in 2015 for the 48 large cities in the sample, block groups within PMDs, on average, had three times as many total jobs, twice as many manufacturing jobs, and seven and a half times more industrial employment than non-covered block groups. While the differences in employment are fairly large the differences in population are less so. Using the 2006-2010 ACS sample, average total population for block groups within PMDs is a little less than 300 people compared to non-PMD block groups. PMD covered block groups also have more renters as a share of their population, are closer to city centers, and have slightly less dense street networks. 
 
 \pagebreak
 
@@ -253,18 +253,22 @@ acs_tab <- tbl(con, "propensity_blkgrp_2006_2010")
 acs_tab <- collect(acs_tab)
 
 city_lehd <- city_lehd %>% inner_join(acs_tab, by = c("bg_fips" = "geoid10"))
+city_lehd <- city_lehd %>% mutate(owner_per = owner_occ/housing_units, 
+                                  renter_per = renter_occ/housing_units )
 
 lehd_pmd_diff2015 <- city_lehd %>% mutate(ind_emp = cns01 + cns02 + cns03 + cns05 + cns06 + cns08) %>% 
-  filter(year == 2015, ind_emp >= 1) %>% 
+  filter(year == 2015) %>% 
    group_by(pmd_policy) %>% 
   summarise_if(is.numeric, funs(mean, median), na.rm = TRUE)
 
 lehd_pmd_diff2015 <- lehd_pmd_diff2015 %>% 
   select(1:2, 9, 35)
 
+
 names(lehd_pmd_diff2015) <- c("PMD Policy", "Avg. Total Employment", "Avg. Mfg. Employment", "Avg. 'Industrial' Employment")
 
-kable(lehd_pmd_diff2015, format = "latex", caption = "Differences in  Employment between PMD and Non-PMD blockgroups, 2015", digits = 2) %>% kable_styling(position = "center")
+kable(lehd_pmd_diff2015, format = "latex", caption = "Differences in  Employment between PMD and Non-PMD blockgroups, 2015", digits = 2, booktabs = TRUE) %>% 
+  kable_styling(position = "center")
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -273,13 +277,19 @@ acs_pmd_diff <- city_lehd %>%
   group_by(pmd_policy) %>% 
   summarise_if(is.numeric, mean, na.rm = TRUE)
 
-acs_pmd_diff <- acs_pmd_diff %>% 
-  select(1, 27, 32:34)
 
-kable(acs_pmd_diff, format = "latex", caption = "Differences in Population Characteristics between PMD and Non-PMD blockgroups", digits = 2, col.names = c("PMD Policy", "Total Pop.", "Housing Units", "Owner Occ.", "Renter")) %>% 
-  kable_styling(position = "center")
+
+acs_pmd_diff <- acs_pmd_diff %>% 
+  select(1, 27, 34, 38:39, 25, 24)
+
+acs_pmd_diff <- acs_pmd_diff %>% 
+  mutate_at(vars(owner_per, renter_per), funs(. * 100))
+
+kable(acs_pmd_diff, format = "latex", caption = "Differences in Population Characteristics between PMD and Non-PMD blockgroups", digits = 1, col.names = c("PMD Policy", "Avg. Total Pop.", "Avg. Housing Units", "Avg. Owner Occ.(%)", "Avg. Renter Occ (%)", "Avg. Distance from Center (km)", "Avg. Network Density"), booktabs = TRUE) %>% 
+  kable_styling(position = "center", latex_options = "scale_down")
 
 ```
+
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -344,19 +354,28 @@ Akaike Inf. Crit. & 1,622.411 & 1,713.434 \\
 \end{tabular} 
 \end{table} 
 
+
+
 ##Results
 
 Overall, this study finds a positive and significant effect on job growth of PMD designation for *industrial* jobs with no significant effect of designation for *manufacturing* jobs. 
 
-Table 6 shows the results of the propensity score-weighted models. Results in divided into two main groups, the first two models estimate the impact of the PMD designation on industry and manufacturing change for the full sample of block groups while models three and four estimate the PMD impact on the smaller restricted sample to block groups with at least four industrial jobs. Overall, the ATE of PMD designation is both significant and positive for industrial jobs and non-significant and marginally positive for manufacturing jobs under both the full and restricted samples. 
+Table 6 shows the results of the propensity score-weighted models. Results in divided into two main groups, the first two models estimate the impact of the PMD designation on industry and manufacturing change for the full sample of block groups while models three and four estimate the PMD impact on the smaller restricted sample to block groups with at least four industrial jobs. Overall, the average treatment effect of PMD designation is both significant and positive for industrial jobs and non-significant and marginally positive for manufacturing jobs under both the full and restricted samples. For industrial jobs in the full sample, the average treatment effect is 199.7 jobs meaning that if every block group in the sample were shifted to PMD designation they would have gained nearly 200 more jobs on average. The same pattern holds in the restricted sample with PMD designation having a non-significant effect on manufacturing job change but a positive and significant change for industrial jobs. For the restricted sample the average treatment effect of PMD designation is 189.2 jobs. The slightly lower estimated effect for the restricted sample is
 
 ```{r full_model_results, echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
 
 stargazer(mfg2_full_svy_ipw, ind2_full_svy_ipw, mfg2_restricted_svy_ipw, ind2_restricted_svy_ipw, title = "Effects of PMD designation on industrial/Manufacturing\n Job Change, 2009-2015", column.labels = c("Full Sample", "Restricted Sample", "Full Sample", "Restricted Sample"), model.numbers = TRUE, nobs = TRUE, header = FALSE)
 
-
-
 ```
+
+
+#Conclusion
+
+In an attempt to protect industrial jobs and users a select number of large cities have passed policies adding additional protections to valuable industrial lands. While not effective in protecting manufacturing, these policies are decidedly effective in protecting a broader array of industrial jobs such as transportation/warehousing and utilities that would not have occured if not for the policy. I made this finding comparing the change in employment between 2009 and 2015 for block groups in the 48 largest cities that are covered by PMD designations versus those that are not. 
+
+While the results offer compelling evidence for the efficacy of PMD type policies for protecting jobs there are some limitations to note. First, the passage of PMD policies varies greatly across cities. I attempted to adjust for this by measuring the change in employment after the policies were already passed
+
+
 
 [^1]: Further technical details on the LODES data set can be found here: [https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf](https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf)
 
