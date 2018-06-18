@@ -64,7 +64,7 @@ big_lehd <- big_lehd %>% ungroup() %>%
 #logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
 host <- "pgsql.rc.pdx.edu"
 user <- "jamgreen"
-pw <- "&zSpR-rmd&v5REgZ"
+pw <- pw
 dbname <- "industrial_land"
 
 con <- dbConnect("PostgreSQL", host = host, user = user, dbname = dbname, password = pw)
