@@ -1,7 +1,7 @@
 #create new lehd places file in db with correct geoms...
 
 if(!require(pacman)){install.packages("pacman"); library(pacman)}
-p_load(RPostgreSQL, sf, dplyr)
+p_load(RPostgreSQL, sf, dplyr, fuzzyjoin)
 
 host <- "pgsql.rc.pdx.edu"
 user <- "jamgreen"
@@ -70,7 +70,6 @@ lehd <- collect(lehd)
 lehd <- lehd %>% group_by(place_geoid, placefp, fullname, namelsad) %>% 
   summarise()
 
-require("fuzzyjoin")
 
 lehd <- lehd %>% ungroup()
 
