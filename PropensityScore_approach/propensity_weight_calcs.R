@@ -3,7 +3,8 @@ if(!require(pacman)){install.packages("pacman"); library(pacman)}
 p_load(RPostgreSQL, car, here, cobalt, ipw,  sf, dplyr, dbplyr)
 
 
-#logistic table processing from industrial_land db for MANUFACTURING JOBS ONLY------
+#ipw table processing from industrial_land db 
+
 host <- "pgsql102.rc.pdx.edu"
 user <- "jamgreen"
 pw <- scan(here("batteries.pgpss"), what = "")
@@ -207,13 +208,13 @@ copy_to(con, prop_gt_table ,"prop_score_mfg_ind", temporary = FALSE,
 copy_to(con, prop_gt_restricted,"prop_score_mfg_ind_restricted", temporary = FALSE,
         indexes = list("geoid10"), overwrite = TRUE )
 
-# #weighted regression models, have to query the db to get 2009 and 2015 emp numbers------
-# #**first steps are to create the final model table----
-# 
-# 
-# 
-# #dbClearResult(con)
+
  dbDisconnect(con)
+ 
+# save final tables to RDS for redundancy
+
+ saveRDS(prop_gt_table,"data/model/city_lehd_2004_full_propensity.RDS")
+ saveRDS(prop_gt_restricted,"data/model/city_lehd_2004_restricted_propensity.RDS")
  
 rm(list = ls())
 
