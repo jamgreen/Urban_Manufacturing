@@ -3,19 +3,13 @@ p_load(rio, stringr, dplyr, sf)
 
 #grab restricted zones by filtering on code and write
 #to new shapefiles, eventually will need to re-project and combine
-#la <- la %>% filter(Zoning %in% c("MR1", "MR2"))
-#la$City <- "Los Angeles"
-#st_write(la, "data/spatial/zoning/data/LosAngeles_PMD.shp", delete_dsn = TRUE)
-#file.remove(list.files(pattern = "Landuse*",recursive = F))
 
-#longbeach <- read_sf("LongBeach_CA.shp")
-#longbeach <- longbeach %>% filter(Zoning == "IG 720")
-#longbeach$City <- "Long Beach"
-#st_write(longbeach, "LongBeach_PMD.shp")
 
 #zoning code for bmore seems to lack marine overlay
 #went to baltimore open data site to d/l marine overlay
 #link:https://data.baltimorecity.gov/Geographic/MIZOD/hkck-wphk
+
+#baltimore
 mizod <- read_sf("data/spatial/zoning/data/mizod.shp")
 mizod$City <- "Baltimore"
 st_write(mizod, "data/spatial/zoning/data/Baltimore_PMD.shp", delete_dsn = TRUE)
@@ -70,9 +64,7 @@ jacksonville$City <- "Jacksonville"
 st_write(jacksonville, "data/spatial/zoning/data/Jacksonville_PMD.shp", delete_dsn = TRUE)
 file.remove(list.files(pattern = "ITAC*"), recursive = F)
 
-#oakland <- read_sf("Oakland_CA.shp")
-#oak_pmd <- oakland %>% filter(Zoning %in% c("IG", "IO", "CIX-1", "CIX-2"))
-#st_write(oakland,"Oakland_PMD.shp")
+
 
 #san francisco
 sanfran <- st_read(unzip("data/spatial/zoning/data/SanFrancisco_CA.zip"), quiet = F)
@@ -83,3 +75,4 @@ st_write(sanfran_pmd, "data/spatial/zoning/data/SanFrancisco_PMD.shp", delete_ds
 file.remove(list.files(pattern = "SanFrancisco*"), recursive = F)
 
 #new york city, pre-processed beforehand
+#seattle, pre-processed beforehand
